@@ -36,7 +36,12 @@ exportSPSS(ALLEEGDATA, [100 200], EEG.times, {EEG.chanlocs.labels});
 For any questions or clarifications about using the scripts, please refer to the documentation at the beginning of each script. This documentation provides detailed explanations of the script’s purpose, parameters, and usage. It is designed to help you navigate through the preprocessing, plotting, and exporting steps effectively. If you encounter any issues not covered in the documentation, feel free to raise them in the [issues section](https://github.com/dinosoldic/EEG-Preproc-ERP/issues) of this repository.
 
 ## License
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+This project is licensed under the MIT License for the original code. 
+
+However, it also includes portions of code from EEGLAB, which are licensed under the BSD 2-Clause License. 
+
+For more details, see the [LICENSE](LICENSE) file.
 
 ## Acknowledgments
 This project utilizes the EEGLAB toolbox, which is essential for EEG data processing. Thank you to the developers and contributors of EEGLAB.
