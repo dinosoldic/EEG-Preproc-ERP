@@ -60,7 +60,7 @@ try
     studyFolderDirs = studyFolderDirs(3:end);
     groupNames = cell(1, numel(studyFolderDirs));
 
-    for groupNameIdx = 1 : numel(studyFolderDirs)
+    for groupNameIdx = 1:numel(studyFolderDirs)
         % Find chars to cut
         isSpaced = strfind(studyFolderDirs(groupNameIdx).name, '_');
 
@@ -81,7 +81,7 @@ try
     groupFolderDirs = groupFolderDirs(3:end);
     conditionNames = cell(1, numel(groupFolderDirs));
 
-    for conditionNameIdx = 1 : numel(groupFolderDirs)
+    for conditionNameIdx = 1:numel(groupFolderDirs)
         % Find chars to cut
         isSpaced = strfind(groupFolderDirs(conditionNameIdx).name, '_');
 
@@ -105,7 +105,7 @@ try
     wb.UserData = [0 numel(groupNames) * numel(conditionNames)];
 
     % Load groups
-    for loadGroupIdx = 1 : numel(groupNames)
+    for loadGroupIdx = 1:numel(groupNames)
         % Get path for each group
         loadGroupPath = fullfile(studyFolderDirs(loadGroupIdx).folder, studyFolderDirs(loadGroupIdx).name);
 
@@ -114,7 +114,7 @@ try
         if ~isfield(ALLEEGDATA, loadGroupName), ALLEEGDATA.(loadGroupName) = struct(); end
 
         % Load conds
-        for loadConditionIdx = 1 : numel(conditionNames)
+        for loadConditionIdx = 1:numel(conditionNames)
             % Get path for each cond
             loadConditionPath = fullfile(loadGroupPath, groupFolderDirs(loadConditionIdx).name);
 
@@ -127,7 +127,7 @@ try
             if ~isfield(ALLEEGDATA.(loadGroupName), loadConditionName), ALLEEGDATA.(loadGroupName).(loadConditionName) = struct(); end
 
             % Load files
-            for eegFileIdx = 1 : numel(conditionFolderDirs)
+            for eegFileIdx = 1:numel(conditionFolderDirs)
                 load(fullfile(conditionFolderDirs(eegFileIdx).folder, conditionFolderDirs(eegFileIdx).name))
                 ALLEEGDATA.(loadGroupName).(loadConditionName)(eegFileIdx).data = EEG.data;
                 ALLEEGDATA.(loadGroupName).(loadConditionName)(eegFileIdx).meanData = mean(EEG.data, 3);
@@ -137,6 +137,7 @@ try
             % Update waitbar
             iIncrementWaitbar(wb);
         end
+
     end
 
     % Close waitbar
@@ -154,12 +155,22 @@ catch importError
     close(wb);
     error("Run script again after checking study folder's organization. ERROR: %s", importError.message);
 end
+
 %% Plot ERP data
 
 while true
     % Select plots
     plotOptions = {'Group vs Group', 'Condition vs Condition', 'Groups vs Conditions', 'Topoplot', '2D Topoplot Movie', '3D Topoplot Movie'};
     [plotOptionsSelection, ~] = listdlg('ListString', plotOptions, 'PromptString', 'Select plots:', 'SelectionMode', 'multiple');
+
+    % ask to plot sem
+    askPlotSem = questdlg('Do you wisgh to plot SEM alongside mean?', 'Plot SEM', 'Yes', 'No', 'Yes');
+
+    if strcmp(askPlotSem, 'Yes')
+        askPlotSem = true;
+    else
+        askPlotSem = false;
+    end
 
     %% Check for group vs group
     if ismember(1, plotOptionsSelection)
@@ -169,27 +180,31 @@ while true
         % Transform data for plot
         if ~exist("groupDataMean", "var")
             % Loop through groups
-            for groupPlotIdx = 1 : numel(groupNames)
+            for groupPlotIdx = 1:numel(groupNames)
                 displacement = 1;
                 loadGroupName = strrep(groupNames{groupPlotIdx}, ' ', '');
 
                 % Loop through conds
-                for conditionPlotIdx = 1 : numel(conditionNames)
+                for conditionPlotIdx = 1:numel(conditionNames)
                     loadConditionName = strrep(conditionNames{conditionPlotIdx}, ' ', '');
 
                     % Loop through data points
-                    for groupDataIdx = 1 : numel(ALLEEGDATA.(loadGroupName).(loadConditionName))
+                    for groupDataIdx = 1:numel(ALLEEGDATA.(loadGroupName).(loadConditionName))
                         groupDataMean{displacement, groupPlotIdx} = ALLEEGDATA.(loadGroupName).(loadConditionName)(groupDataIdx).meanData;
                         displacement = displacement + 1;
                     end
+
                 end
+
             end
+
         end
 
         % Get mean and SEM
         resultToPlotMean = cell(1, numel(groupNames));
         resultToPlotSEM = cell(1, numel(groupNames));
-        for resultIdx = 1 : numel(groupNames)
+
+        for resultIdx = 1:numel(groupNames)
             % Get the indices of non-empty cells
             nonEmptyIndicesMean = ~cellfun(@isempty, groupDataMean(:, resultIdx));
 
@@ -216,18 +231,18 @@ while true
         legendLabels(2:2:end) = groupNames;
 
         % Loop through chans
-        for figIdx =  1 : ceil(numChan / chanFigure)
+        for figIdx = 1:ceil(numChan / chanFigure)
             figure;
             hold on;
             chanStart = (figIdx - 1) * chanFigure + 1;
             chanEnd = min(figIdx * chanFigure, numChan);
 
-            for chanIdx = chanStart : chanEnd
+            for chanIdx = chanStart:chanEnd
                 % Make subplot
                 subplot(numRows, numCols, chanIdx - chanStart + 1);
                 hold on;
 
-                for plotResultIdx = 1 : numel(groupNames)
+                for plotResultIdx = 1:numel(groupNames)
 
                     % Assign a color for the current plot
                     currentColor = colors(plotResultIdx, :);
@@ -237,10 +252,12 @@ while true
                     plotSEM = resultToPlotSEM{plotResultIdx};
 
                     % Plot SEM
-                    fill([axisTime, fliplr(axisTime)],...
-                        [plotMean(chanIdx, :) + plotSEM(chanIdx, :),...
-                        fliplr(plotMean(chanIdx, :) - plotSEM(chanIdx, :))],...
-                        currentColor, 'FaceAlpha', .1,'linestyle','none');
+                    if askPlotSem
+                        fill([axisTime, fliplr(axisTime)], ...
+                            [plotMean(chanIdx, :) + plotSEM(chanIdx, :), ...
+                             fliplr(plotMean(chanIdx, :) - plotSEM(chanIdx, :))], ...
+                            currentColor, 'FaceAlpha', .1, 'linestyle', 'none');
+                    end
 
                     % Plot Mean
                     plot(axisTime, plotMean(chanIdx, :), 'Color', currentColor, 'LineWidth', 1.5);
@@ -257,20 +274,22 @@ while true
                 title(chanLabels{chanIdx});
 
                 % Add func for bigger plot
-                set(gca, 'ButtonDownFcn', @(src, event)expandPlot(src, event, axisTime, resultToPlotMean, resultToPlotSEM, colors, chanIdx, groupNames, chanLabels{chanIdx}, legendLabels));
+                set(gca, 'ButtonDownFcn', @(src, event)expandPlot(axisTime, resultToPlotMean, resultToPlotSEM, colors, chanIdx, chanLabels{chanIdx}, legendLabels, askPlotSem));
 
                 hold off;
             end
+
             % Add main title
             sgtitle('Group vs Group ERPs');
         end
+
     end
 
     %% Check for cond vs cond
     if ismember(2, plotOptionsSelection)
         % Load msg
         fprintf("Loading Condition vs Condition plot...\n");
-        
+
         % Transform data for plot
         if ~exist("conditionDataMean", "var")
             % Loop through conds
@@ -287,13 +306,17 @@ while true
                         conditionDataMean{displacement, conditionPlotIdx} = ALLEEGDATA.(loadGroupName).(loadConditionName)(groupDataIdx).meanData;
                         displacement = displacement + 1;
                     end
+
                 end
+
             end
+
         end
 
         % Get mean and SEM
         resultToPlotMean = cell(1, numel(conditionNames));
         resultToPlotSEM = cell(1, numel(conditionNames));
+
         for resultIdx = 1:numel(conditionNames)
             % Get the indices of non-empty cells
             nonEmptyIndicesMean = ~cellfun(@isempty, conditionDataMean(:, resultIdx));
@@ -321,18 +344,18 @@ while true
         legendLabels(2:2:end) = conditionNames;
 
         % Loop through chans
-        for figIdx =  1 : ceil(numChan / chanFigure)
+        for figIdx = 1:ceil(numChan / chanFigure)
             figure;
             hold on;
             chanStart = (figIdx - 1) * chanFigure + 1;
             chanEnd = min(figIdx * chanFigure, numChan);
 
-            for chanIdx = chanStart : chanEnd
+            for chanIdx = chanStart:chanEnd
                 % Make subplot
                 subplot(numRows, numCols, chanIdx - chanStart + 1);
                 hold on;
 
-                for plotResultIdx = 1 : numel(conditionNames)
+                for plotResultIdx = 1:numel(conditionNames)
 
                     % Assign a color for the current plot
                     currentColor = colors(plotResultIdx, :);
@@ -342,10 +365,12 @@ while true
                     plotSEM = resultToPlotSEM{plotResultIdx};
 
                     % Plot SEM
-                    fill([axisTime, fliplr(axisTime)],...
-                        [plotMean(chanIdx, :) + plotSEM(chanIdx, :),...
-                        fliplr(plotMean(chanIdx, :) - plotSEM(chanIdx, :))],...
-                        currentColor, 'FaceAlpha', .1,'linestyle','none');
+                    if askPlotSem
+                        fill([axisTime, fliplr(axisTime)], ...
+                            [plotMean(chanIdx, :) + plotSEM(chanIdx, :), ...
+                             fliplr(plotMean(chanIdx, :) - plotSEM(chanIdx, :))], ...
+                            currentColor, 'FaceAlpha', .1, 'linestyle', 'none');
+                    end
 
                     % Plot Mean
                     plot(axisTime, plotMean(chanIdx, :), 'Color', currentColor, 'LineWidth', 1.5);
@@ -362,19 +387,21 @@ while true
                 title(chanLabels{chanIdx});
 
                 % Add func for bigger plot
-                set(gca, 'ButtonDownFcn', @(src, event)expandPlot(src, event, axisTime, resultToPlotMean, resultToPlotSEM, colors, chanIdx, conditionNames, chanLabels{chanIdx}, legendLabels));
+                set(gca, 'ButtonDownFcn', @(src, event)expandPlot(axisTime, resultToPlotMean, resultToPlotSEM, colors, chanIdx, chanLabels{chanIdx}, legendLabels, askPlotSem));
                 hold off;
             end
+
             % Add main title
             sgtitle('Condition vs Condition ERPs');
         end
+
     end
 
     %% Check for group vs cond
     if ismember(3, plotOptionsSelection)
         % Load msg
         fprintf("Loading Group vs Condition plot...\n");
-        
+
         % Transform data for plot
         if ~exist("groupConditionDataMean", "var")
             % Preallocate
@@ -390,18 +417,23 @@ while true
 
                     % Loop through data points
                     for groupDataIdx = 1:numel(ALLEEGDATA.(loadGroupName).(loadConditionName))
-                        groupConditionDataMean{groupPlotIdx, conditionPlotIdx} = cat(3, groupConditionDataMean{groupPlotIdx, conditionPlotIdx},...
+                        groupConditionDataMean{groupPlotIdx, conditionPlotIdx} = cat(3, groupConditionDataMean{groupPlotIdx, conditionPlotIdx}, ...
                             ALLEEGDATA.(loadGroupName).(loadConditionName)(groupDataIdx).meanData);
                     end
+
                 end
+
             end
+
         end
 
         % Get mean and SEM
         resultToPlotMean = cell(numel(groupNames), numel(conditionNames));
         resultToPlotSEM = cell(numel(groupNames), numel(conditionNames));
-        for resultIdxRow = 1 : numel(groupNames)
-            for resultIdx = 1 : numel(conditionNames)
+
+        for resultIdxRow = 1:numel(groupNames)
+
+            for resultIdx = 1:numel(conditionNames)
 
                 % Extract non-empty cells
                 resultMean = groupConditionDataMean{resultIdxRow, resultIdx};
@@ -410,6 +442,7 @@ while true
                 resultToPlotSEM{resultIdxRow, resultIdx} = std(resultMean, 0, 3) ./ sqrt(size(resultMean, 3));
                 resultToPlotMean{resultIdxRow, resultIdx} = mean(resultMean, 3);
             end
+
         end
 
         % Plot
@@ -425,21 +458,24 @@ while true
         % Define and fill legend
         legendLabels = strings(1, 2 * numel(groupNames) * numel(conditionNames));
         legendIdx = 1;
+
         for groupIdx = 1:numel(groupNames)
+
             for condIdx = 1:numel(conditionNames)
                 legendLabels(legendIdx * 2) = [groupNames{groupIdx}, ' - ', conditionNames{condIdx}];
                 legendIdx = legendIdx + 1;
             end
+
         end
 
         % Loop through chans
-        for figIdx =  1 : ceil(numChan / chanFigure)
+        for figIdx = 1:ceil(numChan / chanFigure)
             figure;
             hold on;
             chanStart = (figIdx - 1) * chanFigure + 1;
             chanEnd = min(figIdx * chanFigure, numChan);
 
-            for chanIdx = chanStart : chanEnd
+            for chanIdx = chanStart:chanEnd
                 % Make subplot
                 subplot(numRows, numCols, chanIdx - chanStart + 1);
                 hold on;
@@ -448,8 +484,7 @@ while true
                     % Assign a color for the current plot
                     currentColor = colors(plotResultIdxRow, :);
 
-
-                    for plotResultIdx = 1 : numel(conditionNames)
+                    for plotResultIdx = 1:numel(conditionNames)
 
                         % Set line style
                         currentLine = lineStyles{plotResultIdx};
@@ -459,14 +494,17 @@ while true
                         plotSEM = resultToPlotSEM{plotResultIdxRow, plotResultIdx};
 
                         % Plot SEM
-                        fill([axisTime, fliplr(axisTime)],...
-                            [plotMean(chanIdx, :) + plotSEM(chanIdx, :),...
-                            fliplr(plotMean(chanIdx, :) - plotSEM(chanIdx, :))],...
-                            currentColor, 'FaceAlpha', .1,'linestyle','none');
+                        if askPlotSem
+                            fill([axisTime, fliplr(axisTime)], ...
+                                [plotMean(chanIdx, :) + plotSEM(chanIdx, :), ...
+                                 fliplr(plotMean(chanIdx, :) - plotSEM(chanIdx, :))], ...
+                                currentColor, 'FaceAlpha', .1, 'linestyle', 'none');
+                        end
 
                         % Plot Mean
                         plot(axisTime, plotMean(chanIdx, :), currentLine, 'Color', currentColor, 'LineWidth', 1.5);
                     end
+
                 end
 
                 % Add labels and format for subplots
@@ -480,13 +518,15 @@ while true
                 title(chanLabels{chanIdx});
 
                 % Add func for bigger plot
-                set(gca, 'ButtonDownFcn', @(src, event)expandPlot(src, event, axisTime, resultToPlotMean, resultToPlotSEM, colors,...
-                    chanIdx, conditionNames, chanLabels{chanIdx}, legendLabels, lineStyles));
+                set(gca, 'ButtonDownFcn', @(src, event)expandPlot(axisTime, resultToPlotMean, resultToPlotSEM, colors, chanIdx, ...
+                    chanLabels{chanIdx}, legendLabels, askPlotSem, lineStyles));
                 hold off;
             end
+
             % Add main title
             sgtitle('Group and Condition ERPs');
         end
+
     end
 
     %% Wait for user to finish inspecting ERP plots
@@ -509,11 +549,14 @@ while true
 
                     % Loop through data points
                     for groupDataIdx = 1:numel(ALLEEGDATA.(loadGroupName).(loadConditionName))
-                        topoData{groupPlotIdx, conditionPlotIdx} = cat(3, topoData{groupPlotIdx, conditionPlotIdx},...
+                        topoData{groupPlotIdx, conditionPlotIdx} = cat(3, topoData{groupPlotIdx, conditionPlotIdx}, ...
                             ALLEEGDATA.(loadGroupName).(loadConditionName)(groupDataIdx).meanData);
                     end
+
                 end
+
             end
+
         else
             topoData = groupConditionDataMean;
         end
@@ -533,7 +576,7 @@ while true
         [~, endTimeWin] = min(abs(axisTime - topoTimeWin(2)));
 
         % Extract time window from data
-        resultToTopo = mean(topoDataMean(:, startTimeWin : endTimeWin), 2);
+        resultToTopo = mean(topoDataMean(:, startTimeWin:endTimeWin), 2);
 
         % Make title
         topoTitle = sprintf('%d ms to %d ms time window', topoTimeWin(1), topoTimeWin(2));
@@ -546,7 +589,7 @@ while true
         title(topoTitle);
         colorbar;
         set(gca, 'FontSize', 10);
-        set(findall(gcf,'type','text'), 'FontSize', 10);
+        set(findall(gcf, 'type', 'text'), 'FontSize', 10);
     end
 
     %% Wait for user to finish inspecting topoplot
@@ -577,11 +620,14 @@ while true
 
                     % Loop through data points
                     for groupDataIdx = 1:numel(ALLEEGDATA.(loadGroupName).(loadConditionName))
-                        topoData{groupPlotIdx, conditionPlotIdx} = cat(3, topoData{groupPlotIdx, conditionPlotIdx},...
+                        topoData{groupPlotIdx, conditionPlotIdx} = cat(3, topoData{groupPlotIdx, conditionPlotIdx}, ...
                             ALLEEGDATA.(loadGroupName).(loadConditionName)(groupDataIdx).meanData);
                     end
+
                 end
+
             end
+
         else
             topoData = groupConditionDataMean;
         end
@@ -597,13 +643,13 @@ while true
         end
 
         % Above, convert latencies in ms to data point indices
-        pnts1 = round(eeg_lat2point(movie2DParams(1)/1000, 1, srate, [min(axisTime)/1000 max(axisTime)/1000]));
-        pnts2 = round(eeg_lat2point(movie2DParams(2)/1000, 1, srate, [min(axisTime)/1000 max(axisTime)/1000]));
-        scalpERP = mean(topoDataMean(:, pnts1 : pnts2), 3);
+        pnts1 = round(eeg_lat2point(movie2DParams(1) / 1000, 1, srate, [min(axisTime) / 1000 max(axisTime) / 1000]));
+        pnts2 = round(eeg_lat2point(movie2DParams(2) / 1000, 1, srate, [min(axisTime) / 1000 max(axisTime) / 1000]));
+        scalpERP = mean(topoDataMean(:, pnts1:pnts2), 3);
 
         % Smooth data
-        for iChan = 1 : size(scalpERP, 1)
-            scalpERP(iChan, :) = conv(scalpERP(iChan, :) , ones(1, 5)/5, 'same');
+        for iChan = 1:size(scalpERP, 1)
+            scalpERP(iChan, :) = conv(scalpERP(iChan, :), ones(1, 5) / 5, 'same');
         end
 
         % Check if eeglab is initialized
@@ -611,7 +657,7 @@ while true
 
         % 2-D movie
         figure;
-        [Movie2D, Colormap] = eegmovie(scalpERP, srate, chanlocs, 'framenum', 'off', 'vert', 0, 'startsec', movie2DParams(1)/1000, 'topoplotopt', {'numcontour' 0});
+        [Movie2D, Colormap] = eegmovie(scalpERP, srate, chanlocs, 'framenum', 'off', 'vert', 0, 'startsec', movie2DParams(1) / 1000, 'topoplotopt', {'numcontour' 0});
         seemovie(Movie2D, -5, Colormap);
 
         % Save movie
@@ -652,11 +698,14 @@ while true
 
                     % Loop through data points
                     for groupDataIdx = 1:numel(ALLEEGDATA.(loadGroupName).(loadConditionName))
-                        topoData{groupPlotIdx, conditionPlotIdx} = cat(3, topoData{groupPlotIdx, conditionPlotIdx},...
+                        topoData{groupPlotIdx, conditionPlotIdx} = cat(3, topoData{groupPlotIdx, conditionPlotIdx}, ...
                             ALLEEGDATA.(loadGroupName).(loadConditionName)(groupDataIdx).meanData);
                     end
+
                 end
+
             end
+
         else
             topoData = groupConditionDataMean;
         end
@@ -673,7 +722,7 @@ while true
 
         % Use the graphic interface to coregister your head model with your electrode positions
         % Select one of two head models
-        headplotparams = { 'meshfile', 'mheadnew.mat'       , 'transform', [0.664455     -3.39403     -14.2521  -0.00241453     0.015519     -1.55584           11      10.1455           12] };
+        headplotparams = {'meshfile', 'mheadnew.mat', 'transform', [0.664455 -3.39403 -14.2521 -0.00241453 0.015519 -1.55584 11 10.1455 12]};
         % headplotparams = { 'meshfile', 'colin27headmesh.mat', 'transform', [0          -13            0          0.1            0        -1.57         11.7         12.5           12] };
 
         % set up the spline file
@@ -681,21 +730,21 @@ while true
         close;
 
         % Above, convert latencies in ms to data point indices
-        pnts1 = round(eeg_lat2point(movie3DParams(1)/1000, 1, srate, [min(axisTime)/1000 max(axisTime)/1000]));
-        pnts2 = round(eeg_lat2point(movie3DParams(2)/1000, 1, srate, [min(axisTime)/1000 max(axisTime)/1000]));
-        scalpERP = mean(topoDataMean(:, pnts1 : pnts2), 3);
+        pnts1 = round(eeg_lat2point(movie3DParams(1) / 1000, 1, srate, [min(axisTime) / 1000 max(axisTime) / 1000]));
+        pnts2 = round(eeg_lat2point(movie3DParams(2) / 1000, 1, srate, [min(axisTime) / 1000 max(axisTime) / 1000]));
+        scalpERP = mean(topoDataMean(:, pnts1:pnts2), 3);
 
         % Smooth data
-        for iChan = 1 : size(scalpERP, 1)
-            scalpERP(iChan, :) = conv(scalpERP(iChan, :) , ones(1, 5)/5, 'same');
+        for iChan = 1:size(scalpERP, 1)
+            scalpERP(iChan, :) = conv(scalpERP(iChan, :), ones(1, 5) / 5, 'same');
         end
 
         % Check if eeglab is initialized
         if ~exist("ALLEEG", "var"), eeglab('nogui'); end
-        
+
         % 3-D movie
         figure('color', 'w');
-        [Movie3D, Colormap] = eegmovie(scalpERP, srate, chanlocs, 'framenum', 'off', 'vert', 0, 'startsec', movie3DParams(1)/1000, 'mode', '3d', 'headplotopt', {headplotparams{:}, 'material', 'metal'}, 'camerapath', [-127 2 30 0]);
+        [Movie3D, Colormap] = eegmovie(scalpERP, srate, chanlocs, 'framenum', 'off', 'vert', 0, 'startsec', movie3DParams(1) / 1000, 'mode', '3d', 'headplotopt', {headplotparams{:}, 'material', 'metal'}, 'camerapath', [-127 2 30 0]);
 
         seemovie(Movie3D, -5, Colormap);
 
@@ -711,7 +760,7 @@ while true
         % Delete temp files
         delete('STUDY_headplot.spl', 'tmp.spl', 'tmp_file.loc');
     end
-    
+
     % Ask to continue plotting
     plotMore = questdlg('Do you wish to make a different plot or continue?', 'Plot More', 'Plot', 'Continue', 'Continue');
     if strcmpi(plotMore, 'continue'), break, end
@@ -719,6 +768,7 @@ end
 
 %% Ask to save current ALLEEG
 saveALLEEG = questdlg('Do you wish to save current data?', 'Save Data', 'Yes', 'No', 'Yes');
+
 if strcmpi(saveALLEEG, 'yes')
     saveALLEEGPath = uigetdir(pwd, 'Select folder to save current dataset');
     save(fullfile(saveALLEEGPath, "ALLEEGDATA"), "ALLEEGDATA");
