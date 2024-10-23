@@ -164,7 +164,7 @@ while true
     [plotOptionsSelection, ~] = listdlg('ListString', plotOptions, 'PromptString', 'Select plots:', 'SelectionMode', 'multiple');
 
     % ask to plot sem
-    askPlotSem = questdlg('Do you wisgh to plot SEM alongside mean?', 'Plot SEM', 'Yes', 'No', 'Yes');
+    askPlotSem = questdlg('Do you wish to plot SEM alongside mean?', 'Plot SEM', 'Yes', 'No', 'Yes');
 
     if strcmp(askPlotSem, 'Yes')
         askPlotSem = true;
