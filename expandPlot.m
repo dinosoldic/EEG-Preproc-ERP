@@ -32,7 +32,7 @@ function expandPlot(axisTime, meanData, semData, colors, chanIdx, chanLabel, leg
         % Add labels and formatting
         xlim([axisTime(1) axisTime(end)]);
         xline(0, '--', 'Color', 'k', 'Alpha', 0.8);
-        xlabel('Time (s)');
+        xlabel('Time (ms)');
 
         yline(0, '--', 'Color', 'k', 'Alpha', 0.8);
         ylabel('Amplitude (\muV)');
@@ -69,7 +69,7 @@ function expandPlot(axisTime, meanData, semData, colors, chanIdx, chanLabel, leg
         % Add labels and formatting
         xlim([axisTime(1) axisTime(end)]);
         xline(0, '--', 'Color', 'k', 'Alpha', 0.8);
-        xlabel('Time (s)');
+        xlabel('Time (ms)');
 
         yline(0, '--', 'Color', 'k', 'Alpha', 0.8);
         ylabel('Amplitude (\muV)');
