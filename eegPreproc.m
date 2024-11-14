@@ -30,7 +30,7 @@ clear; clc;
 %% Ask user for parameters
 
 cleanoptions = {'Resample', 'Data filters', 'Epoch data', 'Correct baseline', 'Reject with ICA', 'Interpolate', ...
-    'Reject voltage outliers', 'Reject abnormal spectra', 'Re-reference', 'Plot ERPs'};
+                    'Reject voltage outliers', 'Reject abnormal spectra', 'Re-reference', 'Plot ERPs'};
 [cleanselection, ~] = listdlg('ListString', cleanoptions, 'PromptString', 'Select cleaning steps:', 'SelectionMode', 'multiple');
 
 if isempty(cleanselection)
@@ -107,7 +107,7 @@ if ismember(8, cleanselection)
         while true
             % Set spectrum settings
             spectraOptions = {'Enter power rejection threshold (dB)', ...
-                'Enter low frequency limit (Hz)', 'Enter high frequency limit (Hz)'};
+                                  'Enter low frequency limit (Hz)', 'Enter high frequency limit (Hz)'};
             rejSpecValues = inputdlg(spectraOptions, 'Spectra Thresholds', 1, {'50', '0', '2'});
             rejSpecValues = str2double(rejSpecValues);
 
@@ -354,7 +354,7 @@ while true
                         while true
                             % Select stimulus
                             selectStimuli = unique({EEG.event.type});
-                            [epochSettings.stimuli, ~] = listdlg('ListString', selectStimuli, 'PromptString', 'Select Stimuli for Epoch:', 'SelectionMode', 'single');
+                            [epochSettings.stimuli, ~] = listdlg('ListString', selectStimuli, 'PromptString', 'Select Stimuli for Epoch:', 'SelectionMode', 'multiple');
 
                             % Select time window
                             epochSettings.time = inputdlg({'Enter epoch start point in seconds (s)', 'Enter epoch end point in seconds (s)'}, 'Split in Epochs', 1)';
@@ -366,7 +366,7 @@ while true
                             % Remove spaces and convert to lowercase
                             inputStimuliToCompare = cellfun(@(x) lower(strrep(x, ' ', '')), labelsMap(1, :), 'UniformOutput', false);
                             stimuliToCompare = lower(strrep(selectStimuli(epochSettings.stimuli), ' ', ''));
-                           
+
                             % Find label to save
                             [stimuliMatches, stimuliIndices] = ismember(stimuliToCompare, inputStimuliToCompare);
 
