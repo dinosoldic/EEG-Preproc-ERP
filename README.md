@@ -1,7 +1,7 @@
 # EEG Data Processing Project
 
 ## Project Overview
-This project provides a set of functions for preprocessing, plotting, and exporting EEG data for further analysis in SPSS. It utilizes the EEGLAB toolbox to facilitate these tasks.
+This project provides a set of functions for preprocessing, plotting, and exporting EEG data for further analysis in SPSS. It utilizes the EEGLAB toolbox to facilitate these tasks and offers two primary methods for preprocessing data: the standard `eegPreproc` function and the alternative `unfoldERPData` function based on [Unfold Toolbox](https://github.com/unfoldtoolbox/unfold) for handling overlapping Event-Related Potentials (ERPs).
 
 ## Benefits
 - Streamlines the EEG data analysis process.
@@ -9,18 +9,22 @@ This project provides a set of functions for preprocessing, plotting, and export
 - Outputs data in a format compatible with SPSS for statistical analysis.
 
 ## Prerequisites
-- MATLAB with the EEGLAB toolbox installed.
+- MATLAB with the EEGLAB and Unfold toolboxes installed.
 - Basic understanding of EEG data analysis and MATLAB programming.
 
 ## Usage
-1. **Preprocessing:** Use the `eegPreproc` function to preprocess your EEG data. This step is crucial before plotting or exporting.
+1. **Preprocessing:** Use the `eegPreproc` function to preprocess your EEG data. This is the standard method for data preprocessing.
+   Alternatively, use `unfoldERPData` when you need to handle overlapping ERPs. This method preprocesses the data with the same underlying preprocessing steps but includes extra handling to separate overlapping ERPs.
 2. **Plotting ERP:** Use the `eegPlotERP` function to visualize the Event-Related Potentials (ERPs).
-3. **Exporting to SPSS:** Use the `exportSPSS` function to export the processed data into an SPSS-compatible CSV file. If data has already been exported during the ERP plotting step, this function may not be necessary. However, once you have saved ALLEGGDATA, you can call this function as many times as needed.
+3. **Exporting to SPSS:** Use the `exportSPSS` function to export the processed data into an SPSS-compatible CSV file. If the data has already been exported during the ERP plotting step, you can skip this step. However, once you have saved `ALLEEGDATA`, you can call this function as many times as needed.
 
 ### Example Usage
 ```matlab
-% Preprocess your EEG data
+% Preprocess your EEG data with eegPreproc
 eegPreproc;
+
+% Or preprocess your EEG data with unfoldERPData
+unfoldERPData;
 
 % Plot the ERP
 eegPlotERP;
@@ -44,4 +48,5 @@ However, it also includes portions of code from EEGLAB, which are licensed under
 For more details, see the [LICENSE](LICENSE) file.
 
 ## Acknowledgments
-This project utilizes the EEGLAB toolbox, which is essential for EEG data processing. Thank you to the developers and contributors of EEGLAB.
+This project utilizes the EEGLAB toolbox, which is essential for EEG data processing and [Unfold Toolbox](https://github.com/unfoldtoolbox/unfold) (Ehinger BV, Dimigen O: "Unfold: An integrated toolbox for overlap correction, non-linear modeling, and regression-based EEG analysis", peerJ 2019, [DOI](https://doi.org/10.7717/peerj.7838)).
+Thank you to the developers and contributors.
