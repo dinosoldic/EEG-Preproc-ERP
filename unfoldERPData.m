@@ -260,46 +260,46 @@ for i = selected_files
         % Extract stim from data
         timeCutoff = find(ufresult.times == -0.2);
         selectedStimData = ufresult.beta(:, timeCutoff:end, selectedStim + 1);
-       
+
         if ~any(isnan(selectedStimData), 'all')
-        % make eeg backup
-        EEGb = EEG;
+            % make eeg backup
+            EEGb = EEG;
 
-        % remake EEG for custom plotting compatibility (only partial info is kept)
-        EEG = struct();
+            % remake EEG for custom plotting compatibility (only partial info is kept)
+            EEG = struct();
 
-        EEG.data = single(selectedStimData);
-        EEG.srate = EEGb.srate;
-        EEG.times = ufresult.times(timeCutoff:end);
+            EEG.data = single(selectedStimData);
+            EEG.srate = EEGb.srate;
+            EEG.times = ufresult.times(timeCutoff:end);
 
-        EEG.nbchan = size(EEG.data, 1);
-        EEG.pnts = size(EEG.data, 2);
-        EEG.trials = size(EEG.data, 3);
-        EEG.xmin = EEG.times(1);
-        EEG.xmax = EEG.times(end);
+            EEG.nbchan = size(EEG.data, 1);
+            EEG.pnts = size(EEG.data, 2);
+            EEG.trials = size(EEG.data, 3);
+            EEG.xmin = EEG.times(1);
+            EEG.xmax = EEG.times(end);
 
-        EEG.chanlocs = EEGb.chanlocs;
-        EEG.chaninfo = EEGb.chaninfo;
+            EEG.chanlocs = EEGb.chanlocs;
+            EEG.chaninfo = EEGb.chaninfo;
 
-        EEG.ref = EEGb.ref;
+            EEG.ref = EEGb.ref;
 
-        % Correct baseline
-        blIndices = find(ufresult.times >= -0.2 & ufresult.times <= 0);
-        blMean = mean(EEG.data(:, blIndices), 2);
+            % Correct baseline
+            blIndices = find(ufresult.times >= -0.2 & ufresult.times <= 0);
+            blMean = mean(EEG.data(:, blIndices), 2);
 
-        EEG.data = EEG.data - blMean;
+            EEG.data = EEG.data - blMean;
 
-        % save data
-        if isempty(saveLabel)
-            saveFileName = ogfilename;
-        else
-            saveFileName = ogfilename + '_' + saveLabel;
-        end
+            % save data
+            if isempty(saveLabel)
+                saveFileName = ogfilename;
+            else
+                saveFileName = ogfilename + '_' + saveLabel;
+            end
 
-        save(fullfile(savepath, saveFileName), "EEG");
+            save(fullfile(savepath, saveFileName), "EEG");
 
-        % Display completion
-        fprintf("\n-----Subject %s finished-----\n\n", saveFileName);
+            % Display completion
+            fprintf("\n-----Subject %s finished-----\n\n", saveFileName);
 
         else
             % subj error
