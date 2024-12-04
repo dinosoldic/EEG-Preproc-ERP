@@ -1,7 +1,9 @@
 # EEG Data Processing Project
 
 ## Project Overview
-This project provides a set of functions for preprocessing, plotting, and exporting EEG data for further analysis in SPSS. It utilizes the EEGLAB toolbox to facilitate these tasks and offers two primary methods for preprocessing data: the standard `eegPreproc` function and the alternative `unfoldERPData` function based on [Unfold Toolbox](https://github.com/unfoldtoolbox/unfold) for handling overlapping Event-Related Potentials (ERPs).
+This project provides a set of functions for preprocessing, plotting, and exporting EEG data for further analysis in SPSS. It utilizes the EEGLAB toolbox to facilitate these tasks and offers two primary methods for preprocessing data:
+- The standard `eegPreproc` function, based on the [EEGLAB Toolbox](https://github.com/sccn/eeglab).
+- The alternative `unfoldERPData` function, based on the [Unfold Toolbox](https://github.com/unfoldtoolbox/unfold), which is designed for handling overlapping Event-Related Potentials (ERPs).
 
 ## Benefits
 - Streamlines the EEG data analysis process.
@@ -40,13 +42,11 @@ exportSPSS(ALLEEGDATA, [100 200], EEG.times, {EEG.chanlocs.labels});
 For any questions or clarifications about using the scripts, please refer to the documentation at the beginning of each script. This documentation provides detailed explanations of the script’s purpose, parameters, and usage. It is designed to help you navigate through the preprocessing, plotting, and exporting steps effectively. If you encounter any issues not covered in the documentation, feel free to raise them in the [issues section](https://github.com/dinosoldic/EEG-Preproc-ERP/issues) of this repository.
 
 ## License
-
-This project is licensed under the MIT License for the original code. 
-
-However, it also includes portions of code from EEGLAB, which are licensed under the BSD 2-Clause License. 
+This project is licensed under the MIT License for the original code. Portions of the code from the EEGLAB toolbox are licensed under the BSD 2-Clause License.
 
 For more details, see the [LICENSE](LICENSE) file.
 
 ## Acknowledgments
 This project utilizes the EEGLAB toolbox, which is essential for EEG data processing and [Unfold Toolbox](https://github.com/unfoldtoolbox/unfold) (Ehinger BV, Dimigen O: "Unfold: An integrated toolbox for overlap correction, non-linear modeling, and regression-based EEG analysis", peerJ 2019, [DOI](https://doi.org/10.7717/peerj.7838)).
-Thank you to the developers and contributors.
+
+Thank you to the developers and contributors of both EEGLAB and Unfold Toolbox.
