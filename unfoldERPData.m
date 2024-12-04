@@ -100,10 +100,25 @@ options = {'Stimulus 1', 'Stimulus 2'};
 extractStim = questdlg('Which stimulus data would you like to extract from the overlapped signals?', 'Extract Stimulus Data', options{:}, options{2});
 selectedStim = find(strcmp(extractStim, options));
 
+% decide resampling
+doResample = questdlg('Do you want to resample your data?', 'Resample EEG Data', 'Yes', 'No', 'No');
+if ~strcmpi(doResample, 'yes'), doResample = false; else, doResample = true; end
+
+if doResample
+    while true
+        resampleValue = inputdlg('Input new sample frequency', 'Resample Frequency', 1);
+        resampleValue = str2double(resampleValue);
+
+        if isempty(resampleValue), fprintf("Operation canceled. Shutting down\n"); return, end
+        if isnan(resampleValue), warning("Resampling frequency must be numeric"); else, break, end
+    end
+end
+
 % set warning for chanlocs
 warnMissChan = true;
 
-% init error txt
+% init error txt and var
+errorFile = 0;
 fid = fopen(fullfile(savepath, 'errorSubjects.txt'), 'a');
 
 %% Run eeglab with unfold
@@ -189,6 +204,11 @@ for i = selected_files
             clear displaychanlabels_pre; clear chanlabels_pre;
         else
             fprintf("No channels removed from EEG data.\n");
+        end
+
+        % resample EEG
+        if doResample
+            EEG = pop_resample(EEG, resampleValue);
         end
 
         % Apply filter to EEG
@@ -283,6 +303,7 @@ for i = selected_files
 
         else
             % subj error
+            errorFile = errorFile + 1;
             fprintf(fid, 'Error in "%s" for condition "%s"\n', ogfilename,  saveLabel);
 
             warning(['!--------------------------------!\n', ...
@@ -298,6 +319,10 @@ for i = selected_files
 end
 
 % close error file
+if errorFile == 0
+    fprintf(fid, 'No errors found for condition "%s"\n', saveLabel);
+end
+
 fclose(fid);
 
 % Display completion
