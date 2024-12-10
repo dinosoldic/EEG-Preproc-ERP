@@ -284,7 +284,7 @@ for i = selected_files
             EEG.ref = EEGb.ref;
 
             % Correct baseline
-            blIndices = find(ufresult.times >= -0.2 & ufresult.times <= 0);
+            blIndices = find(EEG.times >= -0.2 & EEG.times <= 0);
             blMean = mean(EEG.data(:, blIndices), 2);
 
             EEG.data = EEG.data - blMean;
