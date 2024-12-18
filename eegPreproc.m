@@ -29,31 +29,31 @@ clear; clc;
 
 %% Ask user for parameters
 
-cleanoptions = {'Resample', 'Data filters', 'Epoch data', 'Correct baseline', 'Reject with ICA', 'Interpolate', ...
-                    'Reject voltage outliers', 'Reject abnormal spectra', 'Re-reference', 'Plot ERPs'};
+cleanoptions = {'Resample', 'Data filters', 'Epoch data', 'Correct baseline', 'Reject with ICA', ...
+                    'Interpolate', 'Reject voltage outliers', 'Reject abnormal spectra', 'Re-reference', 'Plot ERPs'};
 [cleanselection, ~] = listdlg('ListString', cleanoptions, 'PromptString', 'Select cleaning steps:', 'SelectionMode', 'multiple');
 
 if isempty(cleanselection)
     % The user canceled the selection
-    fprintf("Operation canceled. Shutting down\n");
+    fprintf('Operation canceled. Shutting down\n');
     return
 end
 
-if ismember(1, cleanselection)
+if any(cleanselection == 1)
     % Enter new fsample
     resampleValue = inputdlg('Enter new sampling frequency', 'Sampling Frequency', 1, "250");
     resampleValue = str2double(resampleValue);
 
     if isempty(resampleValue) || any(isnan(resampleValue))
-        fprintf("Enter valid numeric value. Shutting down\n");
+        fprintf('Enter valid numeric value. Shutting down\n');
         return
     end
 
 end
 
-if ismember(3, cleanselection)
+if any(cleanselection == 3)
     % Enter labels for epoching
-    stimuliLabels = inputdlg({'Enter current labels (labels must be "," separated)', 'Enter new labels (labels must be "," separated)'}, 'Epoch Labels', 1);
+    stimuliLabels = inputdlg({'Enter stimuli labels (labels must be "," separated)', 'Enter label for file''s name (labels must be "," separated)'}, 'Epoch Labels', 1);
 
     labelsMap = {};
 
@@ -69,36 +69,36 @@ if ismember(3, cleanselection)
             trimmedParts = cellfun(@strtrim, parts, 'UniformOutput', false);
 
             % Concatenate results
-            labelsMap = [labelsMap; trimmedParts];
+            labelsMap = [labelsMap; trimmedParts]; %#ok<AGROW>
         end
 
     end
 
 end
 
-if ismember(4, cleanselection)
+if any(cleanselection == 4)
     baselineThreshold = inputdlg({'Enter baseline correction start point in milliseconds (ms)', 'Enter baseline correction end point in milliseconds (ms)'}, 'Baseline Correction', 1, {'-200', '0'});
     baselineThreshold = str2double(baselineThreshold);
 
     if isempty(baselineThreshold) || any(isnan(baselineThreshold))
-        fprintf("Enter valid numeric value. Shutting down\n");
+        fprintf('Enter valid numeric value. Shutting down\n');
         return
     end
 
 end
 
-if ismember(7, cleanselection)
+if any(cleanselection == 7)
     amplitudeThreshold = inputdlg('Enter maximum voltage threshold for automatic voltage epoch rejection', 'Voltage Threshold', 1, "75");
     amplitudeThreshold = str2double(amplitudeThreshold);
 
     if isempty(amplitudeThreshold) || isnan(amplitudeThreshold)
-        fprintf("Enter valid numeric value. Shutting down\n");
+        fprintf('Enter valid numeric value. Shutting down\n');
         return
     end
 
 end
 
-if ismember(8, cleanselection)
+if any(cleanselection == 8)
     rejSpecSettings = cell(1);
     spectraIdx = 1;
 
@@ -113,7 +113,7 @@ if ismember(8, cleanselection)
 
             % Check values
             if isempty(rejSpecValues) || any(isnan(rejSpecValues))
-                fprintf("Enter valid values for epoching\n");
+                fprintf('Enter valid values for epoching\n');
             else
                 break
             end
@@ -135,7 +135,7 @@ end
 folderpath = uigetdir(pwd, 'Select folder with files to load ');
 
 if folderpath == 0
-    fprintf("Operation canceled. Shutting down\n");
+    fprintf('Operation canceled. Shutting down\n');
     return
 end
 
@@ -143,7 +143,7 @@ end
 savepath = uigetdir(pwd, 'Select path to save the data');
 
 if savepath == 0
-    fprintf("Operation canceled. Shutting down\n");
+    fprintf('Operation canceled. Shutting down\n');
     return
 end
 
@@ -153,7 +153,7 @@ saveformat = questdlg('Do you want to save as .set (EEGLAB dataset), .mat (MATLA
 % Check the user's response
 if strcmpi(saveformat, 'set')
 
-    fprintf("Data will be saved as .set file.\n");
+    fprintf('Data will be saved as .set file.\n');
 
     % Set save path
     savepath_set = fullfile(savepath, 'set_files');
@@ -161,18 +161,16 @@ if strcmpi(saveformat, 'set')
     rejSaveFolderPath = fullfile(savepath_set, 'preRej');
 
     % Check folder
-    if ~exist(savepath_set, 'dir')
-        mkdir(savepath_set);
-        if ~exist(icaSaveFolderPath, "dir"), mkdir(icaSaveFolderPath); end
-        if ~exist(rejSaveFolderPath, "dir"), mkdir(rejSaveFolderPath); end
-    end
+    if ~exist(savepath_set, 'dir'), mkdir(savepath_set); end
+    if ~exist(icaSaveFolderPath, 'dir'), mkdir(icaSaveFolderPath); end
+    if ~exist(rejSaveFolderPath, 'dir'), mkdir(rejSaveFolderPath); end
 
     % Update the savepath
     savepath = savepath_set;
 
 elseif strcmpi(saveformat, 'mat')
 
-    fprintf("Data will be saved as .mat file.\n");
+    fprintf('Data will be saved as .mat file.\n');
 
     % Set save path
     savepath_mat = fullfile(savepath, 'mat_files');
@@ -180,18 +178,16 @@ elseif strcmpi(saveformat, 'mat')
     rejSaveFolderPath = fullfile(savepath_mat, 'preRej');
 
     % Check folder
-    if ~exist(savepath_mat, 'dir')
-        mkdir(savepath_mat);
-        if ~exist(icaSaveFolderPath, "dir"), mkdir(icaSaveFolderPath); end
-        if ~exist(rejSaveFolderPath, "dir"), mkdir(rejSaveFolderPath); end
-    end
+    if ~exist(savepath_mat, 'dir'), mkdir(savepath_mat); end
+    if ~exist(icaSaveFolderPath, 'dir'), mkdir(icaSaveFolderPath); end
+    if ~exist(rejSaveFolderPath, 'dir'), mkdir(rejSaveFolderPath); end
 
     % Update savepath
     savepath = savepath_mat;
 
 elseif strcmpi(saveformat, 'both')
 
-    fprintf("Data will be saved as both .set and .mat file.\n");
+    fprintf('Data will be saved as both .set and .mat file.\n');
 
     % Set save path
     savepath_mat = fullfile(savepath, 'mat_files');
@@ -209,17 +205,13 @@ elseif strcmpi(saveformat, 'both')
     rejSaveFolderPath.set = fullfile(savepath.set, 'preRej');
 
     % Check folder
-    if ~exist(savepath.mat, 'dir')
-        mkdir(savepath.mat);
-        if ~exist(icaSaveFolderPath.mat, "dir"), mkdir(icaSaveFolderPath.mat); end
-        if ~exist(rejSaveFolderPath.mat, "dir"), mkdir(rejSaveFolderPath.mat); end
-    end
+    if ~exist(savepath.mat, 'dir'), mkdir(savepath.mat); end
+    if ~exist(icaSaveFolderPath.mat, 'dir'), mkdir(icaSaveFolderPath.mat); end
+    if ~exist(rejSaveFolderPath.mat, 'dir'), mkdir(rejSaveFolderPath.mat); end
 
-    if ~exist(savepath.set, 'dir')
-        mkdir(savepath.set);
-        if ~exist(icaSaveFolderPath.set, "dir"), mkdir(icaSaveFolderPath.set); end
-        if ~exist(rejSaveFolderPath.set, "dir"), mkdir(rejSaveFolderPath.set); end
-    end
+    if ~exist(savepath.set, 'dir'), mkdir(savepath.set); end
+    if ~exist(icaSaveFolderPath.set, 'dir'), mkdir(icaSaveFolderPath.set); end
+    if ~exist(rejSaveFolderPath.set, 'dir'), mkdir(rejSaveFolderPath.set); end
 
 end
 
@@ -236,7 +228,7 @@ selectoptions = {filelist.name};
 [selected_files, ~] = listdlg('ListString', selectoptions, 'PromptString', 'Select file:', 'SelectionMode', 'multiple');
 
 if isempty(selected_files)
-    fprintf("Operation canceled. Shutting down\n");
+    fprintf('Operation canceled. Shutting down\n');
     return
 end
 
@@ -247,7 +239,6 @@ while true
     for i = selected_files
 
         try
-            % Catch error
             % Get the file name
             filename = filelist(i).name;
 
@@ -276,45 +267,34 @@ while true
                 close all
 
                 % Step 2 Remove channels before cleaning data
-                if ~exist("remove_chan_decision_pre", "var")
-
-                    % Ask user to remove channels
-                    remove_chan_decision_pre = questdlg('Do you wish to remove any channels before processing the data?', 'Remove channels', 'Yes', 'No', 'Yes');
-
-                    % Check user's decision for removing channels
-                    if strcmpi(remove_chan_decision_pre, 'Yes')
-
-                        chanlabels_pre = {EEG.chanlocs.labels};
-                        [remove_chan_select_pre, ~] = listdlg('ListString', chanlabels_pre, 'PromptString', 'Select channels:', 'SelectionMode', 'multiple');
-                    end
-
+                if ~exist('doRemoveChans', 'var')
+                    doRemoveChans = questdlg('Do you wish to remove channels from your data?', 'Remove Channels', 'Yes', 'No', 'Yes');
+                    if strcmpi(doRemoveChans, 'yes'), doRemoveChans = true; else, doRemoveChans = false; end
                 end
 
-                % Check if channels to remove exist
-                if strcmpi(remove_chan_decision_pre, 'Yes')
+                if doRemoveChans
 
-                    % Find chanlabels from indices
-                    displaychanlabels_pre = cell(length(remove_chan_select_pre), 1);
+                    if ~exist('selectChansToRemove', 'var')
+                        [selectChansToRemove, ~] = listdlg('ListString', {EEG.chanlocs.labels}, 'PromptString', 'Select channels to remove:', 'SelectionMode', 'multiple');
 
-                    for chanidx = 1:length(remove_chan_select_pre)
-                        displaychanlabels_pre{chanidx} = EEG.chanlocs(remove_chan_select_pre(chanidx)).labels;
+                        % Find chanlabels from indices
+                        chansToRemove = {EEG.chanlocs(selectChansToRemove).labels};
                     end
 
                     % Use EEGLAB function to remove them
-                    EEG = pop_select(EEG, 'nochannel', remove_chan_select_pre);
+                    EEG = pop_select(EEG, 'nochannel', selectChansToRemove);
 
                     % Update EEG
                     EEG = eeg_checkset(EEG);
 
                     % Completion msg
-                    fprintf("Removed channel(s) {%s} from EEG data.\n", strjoin(displaychanlabels_pre, ', '));
-                    clear displaychanlabels_pre; clear chanlabels_pre;
+                    fprintf('Removed channel(s) {%s} from EEG data.\n', strjoin(chansToRemove, ', '));
                 else
-                    fprintf("No channels removed from EEG data.\n");
+                    fprintf('No channels removed from EEG data.\n');
                 end
 
                 % Step 3 Resample
-                if ismember(1, cleanselection)
+                if any(cleanselection == 1)
 
                     % Resample
                     EEG = pop_resample(EEG, resampleValue);
@@ -326,7 +306,7 @@ while true
                 end
 
                 % Step 4 filter data and visualize
-                if ismember(2, cleanselection)
+                if any(cleanselection == 2)
 
                     while true
 
@@ -336,7 +316,7 @@ while true
                             uiwait(gcf);
                             close all
                         catch
-                            warning("Input at least one value valid numeric value to filter the data.")
+                            warning('Input at least one value valid numeric value to filter the data.')
                         end
 
                         % Ask to filter again
@@ -347,9 +327,9 @@ while true
                 end
 
                 % Step 5 Split data in epochs
-                if ismember(3, cleanselection)
+                if any(cleanselection == 3)
 
-                    if ~exist("epochSettings", "var")
+                    if ~exist('epochSettings', 'var')
 
                         while true
                             % Select stimulus
@@ -363,20 +343,23 @@ while true
                             % init suffix
                             suffixToSave = '';
 
-                            % Remove spaces and convert to lowercase
-                            inputStimuliToCompare = cellfun(@(x) lower(strrep(x, ' ', '')), labelsMap(1, :), 'UniformOutput', false);
-                            stimuliToCompare = lower(strrep(selectStimuli(epochSettings.stimuli), ' ', ''));
+                            if ~isempty(labelsMap)
+                                % Remove spaces and convert to lowercase
+                                inputStimuliToCompare = cellfun(@(x) lower(strrep(x, ' ', '')), labelsMap(1, :), 'UniformOutput', false);
+                                stimuliToCompare = lower(strrep(selectStimuli(epochSettings.stimuli), ' ', ''));
 
-                            % Find label to save
-                            [stimuliMatches, stimuliIndices] = ismember(stimuliToCompare, inputStimuliToCompare);
+                                % Find label to save
+                                [stimuliMatches, stimuliIndices] = ismember(stimuliToCompare, inputStimuliToCompare);
 
-                            if stimuliMatches
-                                suffixToSave = ['-', labelsMap{2, stimuliIndices}];
+                                if stimuliMatches
+                                    suffixToSave = ['-', labelsMap{2, stimuliIndices}];
+                                end
+
                             end
 
                             % Check values
                             if ~isnumeric(epochSettings.time) || any(isnan(epochSettings.time)) || isempty(epochSettings.stimuli) || isempty(epochSettings.time)
-                                fprintf("Enter valid values for epoching\n");
+                                fprintf('Enter valid values for epoching\n');
                             else
                                 break
                             end
@@ -397,12 +380,12 @@ while true
                 fileNameSave = ogfilename + suffixToSave;
 
                 % Step 6 Correct baseline
-                if ismember(4, cleanselection)
+                if any(cleanselection == 4)
                     EEG = pop_rmbase(EEG, baselineThreshold');
                 end
 
                 % Step 7 run ICA
-                if ismember(5, cleanselection)
+                if any(cleanselection == 5)
 
                     while true
 
@@ -429,11 +412,11 @@ while true
                     EEG.comments = [];
 
                     if strcmpi(saveformat, 'mat')
-                        save(fullfile(icaSaveFolderPath, fileNameSave), "EEG");
+                        save(fullfile(icaSaveFolderPath, fileNameSave), 'EEG');
                     elseif strcmpi(saveformat, 'set')
                         EEG = pop_saveset(EEG, char(fileNameSave), char(icaSaveFolderPath), 'savemode', 'onefile');
                     elseif strcmpi(saveformat, 'both')
-                        save(fullfile(icaSaveFolderPath.mat, fileNameSave), "EEG");
+                        save(fullfile(icaSaveFolderPath.mat, fileNameSave), 'EEG');
                         EEG = pop_saveset(EEG, char(fileNameSave), char(icaSaveFolderPath.set), 'savemode', 'onefile');
                     end
 
@@ -463,7 +446,7 @@ while true
                 end
 
                 % Step 8 Interpolate bad channels if necessary
-                if ismember(6, cleanselection)
+                if any(cleanselection == 6)
 
                     while true
                         EEG = pop_interp(EEG);
@@ -480,17 +463,17 @@ while true
                 end
 
                 % Step 9 Auto Reject abnormal voltage epochs
-                if ismember(7, cleanselection)
+                if any(cleanselection == 7)
 
                     % Save checkpoint
                     EEG.comments = [];
 
                     if strcmpi(saveformat, 'mat')
-                        save(fullfile(rejSaveFolderPath, fileNameSave), "EEG");
+                        save(fullfile(rejSaveFolderPath, fileNameSave), 'EEG');
                     elseif strcmpi(saveformat, 'set')
                         EEG = pop_saveset(EEG, char(fileNameSave), char(rejSaveFolderPath), 'savemode', 'onefile');
                     elseif strcmpi(saveformat, 'both')
-                        save(fullfile(rejSaveFolderPath.mat, fileNameSave), "EEG");
+                        save(fullfile(rejSaveFolderPath.mat, fileNameSave), 'EEG');
                         EEG = pop_saveset(EEG, char(fileNameSave), char(rejSaveFolderPath.set), 'savemode', 'onefile');
                     end
 
@@ -519,18 +502,18 @@ while true
                 end
 
                 % Step 10 Auto reject abnormal spectra
-                if ismember(8, cleanselection)
+                if any(cleanselection == 8)
 
                     % Save checkpoint
-                    if ~ismember(7, cleanselection)
+                    if ~any(cleanselection == 7)
                         EEG.comments = [];
 
                         if strcmpi(saveformat, 'mat')
-                            save(fullfile(rejSaveFolderPath, fileNameSave), "EEG");
+                            save(fullfile(rejSaveFolderPath, fileNameSave), 'EEG');
                         elseif strcmpi(saveformat, 'set')
                             EEG = pop_saveset(EEG, char(fileNameSave), char(rejSaveFolderPath), 'savemode', 'onefile');
                         elseif strcmpi(saveformat, 'both')
-                            save(fullfile(rejSaveFolderPath.mat, fileNameSave), "EEG");
+                            save(fullfile(rejSaveFolderPath.mat, fileNameSave), 'EEG');
                             EEG = pop_saveset(EEG, char(fileNameSave), char(rejSaveFolderPath.set), 'savemode', 'onefile');
                         end
 
@@ -568,9 +551,9 @@ while true
                 end
 
                 % Step 11 Re-reference
-                if ismember(9, cleanselection)
+                if any(cleanselection == 9)
 
-                    if ~exist("trialRef", "var")
+                    if ~exist('trialRef', 'var')
 
                         while true
                             trialRef = questdlg('How do you wish to re-reference the data?', 'Re-reference', 'Average', 'Channel', 'Average');
@@ -581,11 +564,11 @@ while true
                                 [rerefChan, ~] = listdlg('ListString', chanlabels, 'PromptString', 'Select channel for Re-reference:', 'SelectionMode', 'single');
 
                                 % Check input
-                                if isempty(rerefChan), fprintf("Select a valid channel.\n"), else, break, end
+                                if isempty(rerefChan), fprintf('Select a valid channel.\n'), else, break, end
                             end
 
                             % Check input
-                            if isempty(trialRef), fprintf("Select an option.\n"), else, break, end
+                            if isempty(trialRef), fprintf('Select an option.\n'), else, break, end
                         end
 
                     end
@@ -593,10 +576,10 @@ while true
                     % Re-ref func
                     if strcmpi(trialRef, 'average')
                         EEG = pop_reref(EEG, []);
-                        fprintf("Computing average reference of the data.\n");
+                        fprintf('Computing average reference of the data.\n');
                     elseif strcmpi(trialRef, 'channel')
                         EEG = pop_reref(EEG, rerefChan);
-                        fprintf("Referencing data to channel "" %s"".\n", EEG.chanlocs(rerefChan).labels);
+                        fprintf('Referencing data to channel "%s".\n', EEG.chanlocs(rerefChan).labels);
                     end
 
                     % Plot
@@ -622,8 +605,8 @@ while true
                 end
 
                 % Step 13 Plot ERPs
-                if ismember(10, cleanselection)
-                    topoTitle = sprintf("ERPs for %s", fileNameSave);
+                if any(cleanselection == 10)
+                    topoTitle = sprintf('ERPs for %s', fileNameSave);
                     pop_plottopo(EEG, 1:length(EEG.chanlocs), char(topoTitle), 0);
                     uiwait(gcf);
                     close all
@@ -633,10 +616,10 @@ while true
                 redoclean = questdlg('Do you wish to redo data processing or continue?', 'Finish cleaning', 'Redo', 'Finish', 'Finish');
 
                 if ~strcmpi(redoclean, 'redo')
-                    fprintf("Proceeding to save data ... \ n");
+                    fprintf('Proceeding to save data ... \ n');
                     break
                 else
-                    fprintf ("Deleting current dataset and importing raw data\n");
+                    fprintf ('Deleting current dataset and importing raw data\n');
 
                     % Run eeglab and reset vars
                     eeglab;
@@ -658,7 +641,7 @@ while true
 
             if strcmpi(saveformat, 'mat')
                 % Save "EEG" var
-                save(fullfile(savepath, fileNameSave), "EEG");
+                save(fullfile(savepath, fileNameSave), 'EEG');
 
             elseif strcmpi(saveformat, 'set')
                 % Save dataset
@@ -666,18 +649,18 @@ while true
 
             elseif strcmpi(saveformat, 'both')
                 % Save "EEG" var
-                save(fullfile(savepath.mat, fileNameSave), "EEG");
+                save(fullfile(savepath.mat, fileNameSave), 'EEG');
 
                 % Save dataset
                 EEG = pop_saveset(EEG, char(fileNameSave), char(savepath.set), 'savemode', 'onefile');
             end
 
             % Display completion
-            fprintf("\n-----Subject %s finished-----\n\n", fileNameSave);
+            fprintf('\n-----Subject %s finished-----\n\n', fileNameSave);
 
         catch subject_loop_error
             % Display error message
-            warning("Error found in %s.\n%s (line %d): \n %s\n\nSkipping to next subject...", ogfilename, subject_loop_error.stack(end).name, subject_loop_error.stack(end).line, subject_loop_error.message);
+            warning('Error found in %s.\n%s (line %d): \n %s\n\nSkipping to next subject...', ogfilename, subject_loop_error.stack(end).name, subject_loop_error.stack(end).line, subject_loop_error.message);
             % Skip to next subject
             continue
         end
@@ -685,21 +668,20 @@ while true
     end
 
     % Display completion
-    fprintf("\n-------Succesfully completed %d files-------", length(selected_files));
+    fprintf('\n-------Succesfully completed %d files-------', length(selected_files));
 
     %% Ask to run script on a different condition
     askConditionRerun = questdlg('Do you wish to clean a different condition?', 'Clean new condition', 'Yes', 'No', 'No');
 
-    if ~strcmpi(askConditionRerun, 'yes')
-        break
-    else
-        fprintf ("Preparing to run on new condition...\n");
+    if strcmpi(askConditionRerun, 'yes')
+        fprintf ('Preparing to run on new condition...\n');
 
         clear epochSettings
-
+    else
+        break
     end
 
 end
 
 % Display completion
-fprintf("\n\t\t  /\\_/\\ \t  /\\_/\\ \n\t\t ( o.o )\t ( ^.^ )\n\t\t  > ^ <\t\t  > ^ <\n");
+fprintf('\n\t\t  /\\_/\\ \t  /\\_/\\ \n\t\t ( o.o )\t ( ^.^ )\n\t\t  > ^ <\t\t  > ^ <\n');
