@@ -616,7 +616,7 @@ while true
                 redoclean = questdlg('Do you wish to redo data processing or continue?', 'Finish cleaning', 'Redo', 'Finish', 'Finish');
 
                 if ~strcmpi(redoclean, 'redo')
-                    fprintf('Proceeding to save data ... \ n');
+                    fprintf('Proceeding to save data ... \n');
                     break
                 else
                     fprintf ('Deleting current dataset and importing raw data\n');
