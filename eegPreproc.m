@@ -232,13 +232,16 @@ if isempty(selected_files)
     return
 end
 
+% set warning for missing chanlocs
+warnMissChan = true;
+
 %% Process data
 while true
 
-    % Loop through the list of files and run script for each file
     for i = selected_files
 
         try
+            %% Load data
             % Get the file name
             filename = filelist(i).name;
 
@@ -256,6 +259,50 @@ while true
                 EEG = pop_loadbv(folderpath, filename, [], []);
             else
                 EEG = pop_loadset(filename, folderpath);
+            end
+
+            % Check chanlocs
+            if warnMissChan
+                isChanLocsEmpty = isempty([EEG.chanlocs.X]) || isempty([EEG.chanlocs.Y]) || isempty([EEG.chanlocs.Z]) || isempty([EEG.chanlocs.theta]);
+
+                if isChanLocsEmpty
+
+                    doLoadCoords = questdlg('The coordinates for your channels/electrodes are missing. Do you wish to load a file with their coordinates?', 'Missing Coordinates', 'Yes', 'No', 'Yes');
+
+                end
+
+                warnMissChan = false;
+            end
+
+            % import chanlocs
+            if exist('doLoadCoords', 'var')
+
+                if strcmp(doLoadCoords, 'Yes')
+
+                    while true
+                        % get file and extension
+                        [chanlocsFile, chanlocsDir] = uigetfile('*.*', 'Select file containing EEG layout', 'MultiSelect', 'off');
+                        chanlocsPath = fullfile(chanlocsDir, chanlocsFile);
+                        [~, ~, chanlocsExt] = fileparts(chanlocsPath);
+
+                        try
+                            fprintf('Loading channel coordinates...\n');
+                            EEG = eegImportChanlocs(EEG, chanlocsPath, chanlocsExt);
+                            fprintf('Channel coordinates loaded successfully.\n');
+                            break
+
+                        catch
+                            reChanlocsLoad = questdlg('Channels could not be loaded. Try again?', 'Channel Error', 'Yes', 'No', 'Yes');
+                            if ~strcmp(reChanlocsLoad, 'Yes'), fprintf('Proceeding without loading channel coordinates...\n'); break, end
+                        end
+
+                    end
+
+                else
+                    dialToWait = warndlg('The data will be processed without channel locations. Please note that you will not be able to use functions that require channel coordinates, such as "Topoplot".', 'Channel Omission');
+                    uiwait(dialToWait);
+                end
+
             end
 
             %% Clean EEG data using EEGLAB functions
@@ -668,7 +715,7 @@ while true
     end
 
     % Display completion
-    fprintf('\n-------Succesfully completed %d files-------', length(selected_files));
+    fprintf('\n-------Successfully completed %d files-------', length(selected_files));
 
     %% Ask to run script on a different condition
     askConditionRerun = questdlg('Do you wish to clean a different condition?', 'Clean new condition', 'Yes', 'No', 'No');
