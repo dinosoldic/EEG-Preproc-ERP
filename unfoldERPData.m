@@ -77,6 +77,7 @@ while true
     filterSettings = inputdlg({'Enter low frequency cutoff', 'Enter high frequency cutoff'}, 'EEG Filter Settings', 1)';
     filterSettings = str2double(filterSettings);
     if isempty(filterSettings), fprintf("Operation canceled. Shutting down\n"); return, end
+
     if any(isnan(filterSettings))
         warning("Filter limits must be numeric");
     else
@@ -84,6 +85,7 @@ while true
         highCutoffFilt = filterSettings(2);
         break
     end
+
 end
 
 % Select voltage for auto-artifact rejection
@@ -105,6 +107,7 @@ doResample = questdlg('Do you want to resample your data?', 'Resample EEG Data',
 if ~strcmpi(doResample, 'yes'), doResample = false; else, doResample = true; end
 
 if doResample
+
     while true
         resampleValue = inputdlg('Input new sample frequency', 'Resample Frequency', 1);
         resampleValue = str2double(resampleValue);
@@ -112,6 +115,7 @@ if doResample
         if isempty(resampleValue), fprintf("Operation canceled. Shutting down\n"); return, end
         if isnan(resampleValue), warning("Resampling frequency must be numeric"); else, break, end
     end
+
 end
 
 % set warning for chanlocs
@@ -148,7 +152,7 @@ for i = selected_files
             EEG = pop_loadset(filename, folderpath);
         end
 
-        % check chan coords missing
+        % Check chanlocs
         if warnMissChan
             isChanLocsEmpty = isempty([EEG.chanlocs.X]) || isempty([EEG.chanlocs.Y]) || isempty([EEG.chanlocs.Z]) || isempty([EEG.chanlocs.theta]);
 
@@ -156,16 +160,40 @@ for i = selected_files
 
                 doLoadCoords = questdlg('The coordinates for your channels/electrodes are missing. Do you wish to load a file with their coordinates?', 'Missing Coordinates', 'Yes', 'No', 'Yes');
 
-                if ~strcmp(doLoadCoords, 'Yes')
-                    dialToWait = warndlg('The data will be processed without channel locations. Please note that you will not be able to use functions that require channel coordinates, such as "Topoplot".', 'Channel Omission');
-                    uiwait(dialToWait);
-                else
-                    % add channel loading through eeglab
-                end
-
             end
 
             warnMissChan = false;
+        end
+
+        % import chanlocs
+        if exist('doLoadCoords', 'var')
+
+            if strcmp(doLoadCoords, 'Yes')
+
+                while true
+                    % get file and extension
+                    [chanlocsFile, chanlocsDir] = uigetfile('*.*', 'Select file containing EEG layout', 'MultiSelect', 'off');
+                    chanlocsPath = fullfile(chanlocsDir, chanlocsFile);
+                    [~, ~, chanlocsExt] = fileparts(chanlocsPath);
+
+                    try
+                        fprintf('Loading channel coordinates...\n');
+                        EEG = eegImportChanlocs(EEG, chanlocsPath, chanlocsExt);
+                        fprintf('Channel coordinates loaded successfully.\n');
+                        break
+
+                    catch
+                        reChanlocsLoad = questdlg('Channels could not be loaded. Try again?', 'Channel Error', 'Yes', 'No', 'Yes');
+                        if ~strcmp(reChanlocsLoad, 'Yes'), fprintf('Proceeding without loading channel coordinates...\n'); break, end
+                    end
+
+                end
+
+            else
+                dialToWait = warndlg('The data will be processed without channel locations. Please note that you will not be able to use functions that require channel coordinates, such as "Topoplot".', 'Channel Omission');
+                uiwait(dialToWait);
+            end
+
         end
 
         % Step 2 Remove channels before cleaning data
@@ -304,11 +332,11 @@ for i = selected_files
         else
             % subj error
             errorFile = errorFile + 1;
-            fprintf(fid, 'Error in "%s" for condition "%s"\n', ogfilename,  saveLabel);
+            fprintf(fid, 'Error in "%s" for condition "%s"\n', ogfilename, saveLabel);
 
             warning(['!--------------------------------!\n', ...
-                '\t\t\t"%s" could not be unfolded\n', ...
-                '\t\t !--------------------------------!'], ogfilename);
+                         '\t\t\t"%s" could not be unfolded\n', ...
+                     '\t\t !--------------------------------!'], ogfilename);
         end
 
     catch subject_loop_error
