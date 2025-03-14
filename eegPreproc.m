@@ -29,7 +29,7 @@ clear; clc;
 
 %% Ask user for parameters
 
-cleanoptions = {'Resample', 'Data filters', 'Epoch data', 'Correct baseline', 'Reject with ICA', ...
+cleanoptions = {'Resample', 'Data filters', 'ERP epoch data', 'RS epoch data', 'Correct baseline', 'Reject with ICA', ...
                     'Interpolate', 'Reject voltage outliers', 'Reject abnormal spectra', 'Re-reference', 'Plot ERPs'};
 [cleanselection, ~] = listdlg('ListString', cleanoptions, 'PromptString', 'Select cleaning steps:', 'SelectionMode', 'multiple');
 
@@ -51,32 +51,7 @@ if any(cleanselection == 1)
 
 end
 
-if any(cleanselection == 3)
-    % Enter labels for epoching
-    stimuliLabels = inputdlg({'Enter stimuli labels (labels must be "," separated)', 'Enter label for file''s name (labels must be "," separated)'}, 'Epoch Labels', 1);
-
-    labelsMap = {};
-
-    % split labels
-    if ~isempty(stimuliLabels) && ~any(cellfun(@isempty, stimuliLabels))
-
-        for labelsMapIdx = 1:numel(stimuliLabels)
-
-            % Split strings
-            parts = strsplit(stimuliLabels{labelsMapIdx}, ',');
-
-            % Trim spaces
-            trimmedParts = cellfun(@strtrim, parts, 'UniformOutput', false);
-
-            % Concatenate results
-            labelsMap = [labelsMap; trimmedParts]; %#ok<AGROW>
-        end
-
-    end
-
-end
-
-if any(cleanselection == 4)
+if any(cleanselection == 5)
     baselineThreshold = inputdlg({'Enter baseline correction start point in milliseconds (ms)', 'Enter baseline correction end point in milliseconds (ms)'}, 'Baseline Correction', 1, {'-200', '0'});
     baselineThreshold = str2double(baselineThreshold);
 
@@ -87,7 +62,7 @@ if any(cleanselection == 4)
 
 end
 
-if any(cleanselection == 7)
+if any(cleanselection == 8)
     amplitudeThreshold = inputdlg('Enter maximum voltage threshold for automatic voltage epoch rejection', 'Voltage Threshold', 1, "75");
     amplitudeThreshold = str2double(amplitudeThreshold);
 
@@ -98,7 +73,7 @@ if any(cleanselection == 7)
 
 end
 
-if any(cleanselection == 8)
+if any(cleanselection == 9)
     rejSpecSettings = cell(1);
     spectraIdx = 1;
 
@@ -131,21 +106,15 @@ if any(cleanselection == 8)
 
 end
 
-% Select files
-folderpath = uigetdir(pwd, 'Select folder with files to load ');
-
-if folderpath == 0
-    fprintf('Operation canceled. Shutting down\n');
-    return
-end
+% Select files to load
+[loadfiles, loadpath] = uigetfile({'*.vhdr;*.ahdr', 'Brain Vision files (*.vhdr, *.ahdr)'; '*.mat;*.set', 'MATLAB-EEGLAB files (*.mat, *.set)'}, 'Select files with raw EEG data to load', 'MultiSelect', 'on');
+if loadpath == 0, fprintf('Operation canceled. Shutting down\n'); return, end
+filelist = fullfile(loadpath, loadfiles);
+if ~iscell(filelist), filelist = {filelist}; end
 
 % Define savepath
 savepath = uigetdir(pwd, 'Select path to save the data');
-
-if savepath == 0
-    fprintf('Operation canceled. Shutting down\n');
-    return
-end
+if savepath == 0, fprintf('Operation canceled. Shutting down\n'); return, end
 
 % Prompt save format
 saveformat = questdlg('Do you want to save as .set (EEGLAB dataset), .mat (MATLAB data) file or both?', 'Choose format', 'set', 'mat', 'both', 'mat');
@@ -215,39 +184,22 @@ elseif strcmpi(saveformat, 'both')
 
 end
 
-%% Decide start point
-
-% Get a list of files in the folder
-vhdrFiles = dir(fullfile(folderpath, '*.vhdr'));
-matFiles = dir(fullfile(folderpath, '*.mat'));
-setFiles = dir(fullfile(folderpath, '*.set'));
-filelist = [vhdrFiles, matFiles, setFiles];
-
-% Ask user to select files from dir
-selectoptions = {filelist.name};
-[selected_files, ~] = listdlg('ListString', selectoptions, 'PromptString', 'Select file:', 'SelectionMode', 'multiple');
-
-if isempty(selected_files)
-    fprintf('Operation canceled. Shutting down\n');
-    return
-end
-
 % set warning for missing chanlocs
 warnMissChan = true;
 
 %% Process data
 while true
 
-    for i = selected_files
+    for i = 1:numel(filelist)
 
         try
             %% Load data
-            % Get the file name
-            filename = filelist(i).name;
+            % Get the file
+            file = filelist{i};
 
             % Get filename to save it later
-            [~, ogfilename, ogExtension] = fileparts(filename);
-            ogfilename = string(ogfilename);
+            [ogFolderpath, ogfilename, ogExtension] = fileparts(file);
+            fileNameSave = ogfilename;
 
             % Run EEGlab in the background and call it again for each iteration
             % so it clears previous unnecesary data.
@@ -255,10 +207,10 @@ while true
             close all
 
             % Load EEG data from .vhdr or .ahdr file or other
-            if strcmpi(ogExtension, '.vhdr')
-                EEG = pop_loadbv(folderpath, filename, [], []);
+            if strcmp(ogExtension, '.vhdr') || strcmp(ogExtension, '.ahdr')
+                EEG = pop_loadbv(ogFolderpath, [ogfilename, ogExtension], [], []);
             else
-                EEG = pop_loadset(filename, folderpath);
+                EEG = pop_loadset(file);
             end
 
             % Check chanlocs
@@ -373,7 +325,7 @@ while true
 
                 end
 
-                % Step 5 Split data in epochs
+                % Step 5.1 Split data in epochs for ERPs
                 if any(cleanselection == 3)
 
                     if ~exist('epochSettings', 'var')
@@ -388,21 +340,6 @@ while true
                             epochSettings.time = str2double(epochSettings.time);
 
                             % init suffix
-                            suffixToSave = '';
-
-                            if ~isempty(labelsMap)
-                                % Remove spaces and convert to lowercase
-                                inputStimuliToCompare = cellfun(@(x) lower(strrep(x, ' ', '')), labelsMap(1, :), 'UniformOutput', false);
-                                stimuliToCompare = lower(strrep(selectStimuli(epochSettings.stimuli), ' ', ''));
-
-                                % Find label to save
-                                [stimuliMatches, stimuliIndices] = ismember(stimuliToCompare, inputStimuliToCompare);
-
-                                if stimuliMatches
-                                    suffixToSave = ['-', labelsMap{2, stimuliIndices}];
-                                end
-
-                            end
 
                             % Check values
                             if ~isnumeric(epochSettings.time) || any(isnan(epochSettings.time)) || isempty(epochSettings.stimuli) || isempty(epochSettings.time)
@@ -421,18 +358,83 @@ while true
                     pop_eegplot(EEG, 1, 1, 1); % [1 channel data or 0 independent components], [1 for channel interpolation, 0 to skip interpolation], [1 to allow manual rejection]
                     uiwait(gcf);
                     close all
+
                 end
 
-                % Change filename for saving
-                fileNameSave = ogfilename + suffixToSave;
+                % Step 5.2 Split data in epochs for RS
+                if any(cleanselection == 4)
+
+                    if ~exist('epochSettings', 'var')
+
+                        while true
+                            % Select stimulus
+                            selectStimuli = unique({EEG.event.type});
+                            [epochSettings.stimuli.start, ~] = listdlg('ListString', selectStimuli, 'PromptString', {'Select start mark for epoching:', ''}, 'SelectionMode', 'single');
+                            [epochSettings.stimuli.end, ~] = listdlg('ListString', selectStimuli, 'PromptString', {'Select end mark for epoching:', ''}, 'SelectionMode', 'single');
+
+                            % Select time window
+                            epochSettings.time = inputdlg('Enter epoch length in seconds (s)', 'RS Epoch length', 1)';
+                            epochSettings.time = str2double(epochSettings.time);
+
+                            % Check values
+                            if ~isnumeric(epochSettings.time) || isnan(epochSettings.time) || isempty(epochSettings.stimuli.start) || isempty(epochSettings.stimuli.end) || isempty(epochSettings.time)
+                                fprintf('Enter valid values for epoching\n');
+                            else
+                                break
+                            end
+
+                        end
+
+                    end
+
+                    % Find start and end for epochs in timepoints
+                    startEpochTmpt = EEG.event(find(strcmp({EEG.event.type}, selectStimuli(epochSettings.stimuli.start)))).latency;
+                    endEpochTmpt = EEG.event(find(strcmp({EEG.event.type}, selectStimuli(epochSettings.stimuli.end)))).latency;
+
+                    % First raw epoch
+                    EEG.data = EEG.data(:, startEpochTmpt:endEpochTmpt);
+
+                    % Get tmpts/trial
+                    epochTmpts = EEG.srate * epochSettings.time;
+                    nEpochs = floor(size(EEG.data, 2) / epochTmpts);
+
+                    % Second epoching
+                    EEG.data = reshape(EEG.data(:, 1:epochTmpts * nEpochs), size(EEG.data, 1), epochTmpts, nEpochs);
+
+                    % Fix EEG struct
+                    EEG.trials = size(EEG.data, 3);
+                    EEG.pnts = size(EEG.data, 2);
+                    EEG.xmax = epochSettings.time;
+                    EEG.times = EEG.times(1:epochTmpts);
+                    EEG.event = [];
+                    EEG.urevent = [];
+                    EEG.eventdescription = {};
+
+                    EEG = eeg_checkset(EEG);
+
+                    % Plot
+                    pop_eegplot(EEG, 1, 1, 1); % [1 channel data or 0 independent components], [1 for channel interpolation, 0 to skip interpolation], [1 to allow manual rejection]
+                    uiwait(gcf);
+                    close all
+
+                end
+
+                if ~exist('stimuliLabel', 'var') && any(ismember(cleanselection, [3, 4]))
+                    % Enter labels for epoching
+                    stimuliLabel = inputdlg('Enter label for file''s name', 'Epoch Labels');
+                    if isempty(stimuliLabel), stimuliLabel = ''; end
+
+                    % Change filename for saving
+                    fileNameSave = ogfilename + '_' + stimuliLabel;
+                end
 
                 % Step 6 Correct baseline
-                if any(cleanselection == 4)
+                if any(cleanselection == 5)
                     EEG = pop_rmbase(EEG, baselineThreshold');
                 end
 
                 % Step 7 run ICA
-                if any(cleanselection == 5)
+                if any(cleanselection == 6)
 
                     while true
 
@@ -493,7 +495,7 @@ while true
                 end
 
                 % Step 8 Interpolate bad channels if necessary
-                if any(cleanselection == 6)
+                if any(cleanselection == 7)
 
                     while true
                         EEG = pop_interp(EEG);
@@ -510,7 +512,7 @@ while true
                 end
 
                 % Step 9 Auto Reject abnormal voltage epochs
-                if any(cleanselection == 7)
+                if any(cleanselection == 8)
 
                     % Save checkpoint
                     EEG.comments = [];
@@ -541,15 +543,10 @@ while true
                     uiwait(gcf);
                     close all
 
-                    % Reject marked trials
-                    if ~isempty(EEG.reject.rejmanual) && any(EEG.reject.rejmanual)
-                        EEG = pop_rejepoch(EEG, EEG.reject.rejmanual, 0);
-                    end
-
                 end
 
                 % Step 10 Auto reject abnormal spectra
-                if any(cleanselection == 8)
+                if any(cleanselection == 9)
 
                     % Save checkpoint
                     if ~any(cleanselection == 7)
@@ -588,17 +585,12 @@ while true
                         uiwait(gcf);
                         close all
 
-                        % Reject marked trials
-                        if ~isempty(EEG.reject.rejmanual) && any(EEG.reject.rejmanual)
-                            EEG = pop_rejepoch(EEG, EEG.reject.rejmanual, 0);
-                        end
-
                     end
 
                 end
 
                 % Step 11 Re-reference
-                if any(cleanselection == 9)
+                if any(cleanselection == 10)
 
                     if ~exist('trialRef', 'var')
 
@@ -652,7 +644,7 @@ while true
                 end
 
                 % Step 13 Plot ERPs
-                if any(cleanselection == 10)
+                if any(cleanselection == 11)
                     topoTitle = sprintf('ERPs for %s', fileNameSave);
                     pop_plottopo(EEG, 1:length(EEG.chanlocs), char(topoTitle), 0);
                     uiwait(gcf);
@@ -723,7 +715,7 @@ while true
     if strcmpi(askConditionRerun, 'yes')
         fprintf ('Preparing to run on new condition...\n');
 
-        clear epochSettings
+        clear epochSettings stimuliLabel
     else
         break
     end
