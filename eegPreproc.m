@@ -425,7 +425,7 @@ while true
                     if isempty(stimuliLabel), stimuliLabel = ''; end
 
                     % Change filename for saving
-                    fileNameSave = ogfilename + '_' + stimuliLabel;
+                    fileNameSave = [ogfilename, '_', stimuliLabel{:}];
                 end
 
                 % Step 6 Correct baseline
