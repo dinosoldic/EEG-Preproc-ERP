@@ -221,6 +221,11 @@ while true
 
                     doLoadCoords = questdlg('The coordinates for your channels/electrodes are missing. Do you wish to load a file with their coordinates?', 'Missing Coordinates', 'Yes', 'No', 'Yes');
 
+                    % get file and extension
+                    [chanlocsFile, chanlocsDir] = uigetfile('*.*', 'Select file containing EEG layout', 'MultiSelect', 'off');
+                    chanlocsPath = fullfile(chanlocsDir, chanlocsFile);
+                    [~, ~, chanlocsExt] = fileparts(chanlocsPath);
+
                 end
 
                 warnMissChan = false;
@@ -232,10 +237,6 @@ while true
                 if strcmp(doLoadCoords, 'Yes')
 
                     while true
-                        % get file and extension
-                        [chanlocsFile, chanlocsDir] = uigetfile('*.*', 'Select file containing EEG layout', 'MultiSelect', 'off');
-                        chanlocsPath = fullfile(chanlocsDir, chanlocsFile);
-                        [~, ~, chanlocsExt] = fileparts(chanlocsPath);
 
                         try
                             fprintf('Loading channel coordinates...\n');
@@ -424,9 +425,10 @@ while true
                     stimuliLabel = inputdlg('Enter label for file''s name', 'Epoch Labels');
                     if isempty(stimuliLabel), stimuliLabel = ''; end
 
-                    % Change filename for saving
-                    fileNameSave = [ogfilename, '_', stimuliLabel{:}];
                 end
+
+                % Change filename for saving
+                fileNameSave = [ogfilename, '_', stimuliLabel{:}];
 
                 % Step 6 Correct baseline
                 if any(cleanselection == 5)
@@ -707,7 +709,7 @@ while true
     end
 
     % Display completion
-    fprintf('\n-------Successfully completed %d files-------', length(selected_files));
+    fprintf('\n-------Successfully completed %d files-------', numel(filelist));
 
     %% Ask to run script on a different condition
     askConditionRerun = questdlg('Do you wish to clean a different condition?', 'Clean new condition', 'Yes', 'No', 'No');
