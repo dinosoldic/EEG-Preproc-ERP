@@ -646,11 +646,6 @@ while true
                     uiwait(gcf);
                     close all
 
-                    % Check and reject leftover merked trials
-                    if ~isempty(EEG.reject.rejmanual) && any(EEG.reject.rejmanual)
-                        EEG = pop_rejepoch(EEG, EEG.reject.rejmanual, 0);
-                    end
-
                     % Ask to inspect again
                     re_rej = questdlg('Do you wish to inspect the data once again?', 'Data Inspection', 'Yes', 'No', 'No');
                     if strcmpi(re_rej, 'No'), break, end
@@ -679,9 +674,9 @@ while true
 
                     % Load EEG data from .vhdr or .ahdr file or other
                     if strcmpi(ogExtension, '.vhdr')
-                        EEG = pop_loadbv(folderpath, filename, [], []);
+                        EEG = pop_loadbv(loadpath, ogfilename, [], []);
                     else
-                        EEG = pop_loadset(filename, folderpath);
+                        EEG = pop_loadset(ogfilename, loadpath);
                     end
 
                 end
