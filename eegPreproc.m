@@ -30,7 +30,7 @@ clear; clc;
 %% Ask user for parameters
 
 cleanoptions = {'Resample', 'Data filters', 'ERP epoch data', 'RS epoch data', 'Correct baseline', 'Reject with ICA', ...
-                    'Interpolate', 'Reject voltage outliers', 'Reject abnormal spectra', 'Re-reference', 'Plot ERPs'};
+                    'Interpolate', 'Reject voltage outliers', 'Reject abnormal spectra', 'Re-reference', 'Plot ERPs', 'Transform to Fieldtrip'};
 [cleanselection, ~] = listdlg('ListString', cleanoptions, 'PromptString', 'Select cleaning steps:', 'SelectionMode', 'multiple');
 
 if isempty(cleanselection)
@@ -115,6 +115,17 @@ if ~iscell(filelist), filelist = {filelist}; end
 % Define savepath
 savepath = uigetdir(pwd, 'Select path to save the data');
 if savepath == 0, fprintf('Operation canceled. Shutting down\n'); return, end
+
+% make mat ft folder if selected
+if any(cleanselection == 12)
+
+    % Set save path
+    savepath_ft = fullfile(savepath, 'ft_mat_files');
+   
+    % Check folder
+    if ~exist(savepath_ft, 'dir'), mkdir(savepath_ft); end   
+
+end
 
 % Prompt save format
 saveformat = questdlg('Do you want to save as .set (EEGLAB dataset), .mat (MATLAB data) file or both?', 'Choose format', 'set', 'mat', 'both', 'mat');
@@ -694,6 +705,14 @@ while true
 
                 % Save dataset
                 EEG = pop_saveset(EEG, char(fileNameSave), char(savepath.set), 'savemode', 'onefile');
+            end
+
+            % transform and save to FT
+            if any(cleanselection == 12)
+
+                data = eeglab2fieldtrip(EEG, 'raw', 'none');
+                save(fullfile(savepath_ft, fileNameSave), 'data');
+
             end
 
             % Display completion
