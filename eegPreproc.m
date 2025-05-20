@@ -29,15 +29,11 @@ clear; clc;
 
 %% Ask user for parameters
 
-cleanoptions = {'Resample', 'Data filters', 'ERP epoch data', 'RS epoch data', 'Correct baseline', 'Reject with ICA', ...
+cleanoptions = {'Resample', 'Single EEG filter', 'Multi EEG filter', 'ERP epoch data', 'RS epoch data', 'Correct baseline', 'Reject with ICA', ...
                     'Interpolate', 'Reject voltage outliers', 'Reject abnormal spectra', 'Re-reference', 'Plot ERPs', 'Transform to Fieldtrip'};
 [cleanselection, ~] = listdlg('ListString', cleanoptions, 'PromptString', 'Select cleaning steps:', 'SelectionMode', 'multiple');
 
-if isempty(cleanselection)
-    % The user canceled the selection
-    fprintf('Operation canceled. Shutting down\n');
-    return
-end
+if isempty(cleanselection), fprintf('Operation canceled. Shutting down\n'); return, end
 
 if any(cleanselection == 1)
     % Enter new fsample
@@ -51,7 +47,52 @@ if any(cleanselection == 1)
 
 end
 
-if any(cleanselection == 5)
+if any(cleanselection == 2)
+    % Prompt filter type
+    filterTypeOptions = {'Low-pass', 'High-pass', 'Pass band', 'Notch'};
+    [filterType, ~] = listdlg('ListString', filterTypeOptions, 'PromptString', {'Select the filter that you want to', 'apply to your EEG data:'}, 'SelectionMode', 'single');
+
+    if isempty(filterType), fprintf('Operation canceled. Shutting down\n'); return, end
+    doNotchFilter = false;
+
+    while true
+        % Enter filter freq value
+        switch filterType
+            case 1
+                filterVal = inputdlg('Enter frequency cutoff (Hz)', 'Low-Pass Filter', 1)';
+                filterVal = str2double(filterVal);
+                filterValues.low = [];
+                filterValues.high = filterVal;
+            case 2
+                filterVal = inputdlg('Enter frequency cutoff (Hz)', 'High-Pass Filter', 1)';
+                filterVal = str2double(filterVal);
+                filterValues.low = filterVal;
+                filterValues.high = [];
+            case 3
+                filterVal = inputdlg({'Enter low frequency cutoff (Hz)', 'Enter high frequency cutoff (Hz)'}, 'Pass Band Filter', 1)';
+                filterVal = str2double(filterVal);
+                filterValues.low = filterVal(1);
+                filterValues.high = filterVal(2);
+            case 4
+                filterVal = inputdlg({'Enter low frequency cutoff (Hz)', 'Enter high frequency cutoff (Hz)'}, 'Notch Filter', 1)';
+                filterVal = str2double(filterVal);
+                filterValues.low = filterVal(1);
+                filterValues.high = filterVal(2);
+                doNotchFilter = true;
+        end
+
+        % Check values
+        if ~isnumeric(filterVal) || any(isnan(filterVal)) || isempty(filterVal) || any(filterVal < 0)
+            fprintf('Enter valid values for filtering\n');
+        else
+            break
+        end
+
+    end
+
+end
+
+if any(cleanselection == 6)
     baselineThreshold = inputdlg({'Enter baseline correction start point in milliseconds (ms)', 'Enter baseline correction end point in milliseconds (ms)'}, 'Baseline Correction', 1, {'-200', '0'});
     baselineThreshold = str2double(baselineThreshold);
 
@@ -62,7 +103,7 @@ if any(cleanselection == 5)
 
 end
 
-if any(cleanselection == 8)
+if any(cleanselection == 9)
     amplitudeThreshold = inputdlg('Enter maximum voltage threshold for automatic voltage epoch rejection', 'Voltage Threshold', 1, "75");
     amplitudeThreshold = str2double(amplitudeThreshold);
 
@@ -73,7 +114,7 @@ if any(cleanselection == 8)
 
 end
 
-if any(cleanselection == 9)
+if any(cleanselection == 10)
     rejSpecSettings = cell(1);
     spectraIdx = 1;
 
@@ -117,7 +158,7 @@ savepath = uigetdir(pwd, 'Select path to save the data');
 if savepath == 0, fprintf('Operation canceled. Shutting down\n'); return, end
 
 % make mat ft folder if selected
-if any(cleanselection == 12)
+if any(cleanselection == 13)
 
     % Set save path
     savepath_ft = fullfile(savepath, 'ft_mat_files');
@@ -317,7 +358,15 @@ while true
                 end
 
                 % Step 4 filter data and visualize
+                % Single
                 if any(cleanselection == 2)
+
+                    EEG = pop_eegfiltnew(EEG, 'locutoff', filterValues.low, 'hicutoff', filterValues.high, 'revfilt', doNotchFilter);
+
+                end
+
+                % Multi
+                if any(cleanselection == 3)
 
                     while true
 
@@ -338,7 +387,7 @@ while true
                 end
 
                 % Step 5.1 Split data in epochs for ERPs
-                if any(cleanselection == 3)
+                if any(cleanselection == 4)
 
                     if ~exist('epochSettings', 'var')
 
@@ -374,7 +423,7 @@ while true
                 end
 
                 % Step 5.2 Split data in epochs for RS
-                if any(cleanselection == 4)
+                if any(cleanselection == 5)
 
                     if ~exist('epochSettings', 'var')
 
@@ -442,12 +491,12 @@ while true
                 fileNameSave = [ogfilename, '_', stimuliLabel{:}];
 
                 % Step 6 Correct baseline
-                if any(cleanselection == 5)
+                if any(cleanselection == 6)
                     EEG = pop_rmbase(EEG, baselineThreshold');
                 end
 
                 % Step 7 run ICA
-                if any(cleanselection == 6)
+                if any(cleanselection == 7)
 
                     while true
 
@@ -508,7 +557,7 @@ while true
                 end
 
                 % Step 8 Interpolate bad channels if necessary
-                if any(cleanselection == 7)
+                if any(cleanselection == 8)
 
                     while true
                         EEG = pop_interp(EEG);
@@ -525,7 +574,7 @@ while true
                 end
 
                 % Step 9 Auto Reject abnormal voltage epochs
-                if any(cleanselection == 8)
+                if any(cleanselection == 9)
 
                     % Save checkpoint
                     EEG.comments = [];
@@ -559,10 +608,10 @@ while true
                 end
 
                 % Step 10 Auto reject abnormal spectra
-                if any(cleanselection == 9)
+                if any(cleanselection == 10)
 
                     % Save checkpoint
-                    if ~any(cleanselection == 7)
+                    if ~any(cleanselection == 8)
                         EEG.comments = [];
 
                         if strcmpi(saveformat, 'mat')
@@ -603,7 +652,7 @@ while true
                 end
 
                 % Step 11 Re-reference
-                if any(cleanselection == 10)
+                if any(cleanselection == 11)
 
                     if ~exist('trialRef', 'var')
 
@@ -652,7 +701,7 @@ while true
                 end
 
                 % Step 13 Plot ERPs
-                if any(cleanselection == 11)
+                if any(cleanselection == 12)
                     topoTitle = sprintf('ERPs for %s', fileNameSave);
                     pop_plottopo(EEG, 1:length(EEG.chanlocs), char(topoTitle), 0);
                     uiwait(gcf);
@@ -669,6 +718,8 @@ while true
                     fprintf ('Deleting current dataset and importing raw data\n');
 
                     % Run eeglab and reset vars
+                    clear EEG;
+                    clear ALLEEG;
                     eeglab;
                     close all
 
@@ -703,7 +754,7 @@ while true
             end
 
             % transform and save to FT
-            if any(cleanselection == 12)
+            if any(cleanselection == 13)
 
                 data = eeglab2fieldtrip(EEG, 'raw', 'none');
                 save(fullfile(savepath_ft, fileNameSave), 'data');
