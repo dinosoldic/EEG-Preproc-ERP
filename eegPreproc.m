@@ -121,9 +121,9 @@ if any(cleanselection == 12)
 
     % Set save path
     savepath_ft = fullfile(savepath, 'ft_mat_files');
-   
+
     % Check folder
-    if ~exist(savepath_ft, 'dir'), mkdir(savepath_ft); end   
+    if ~exist(savepath_ft, 'dir'), mkdir(savepath_ft); end
 
 end
 
@@ -674,7 +674,7 @@ while true
 
                     % Load EEG data from .vhdr or .ahdr file or other
                     if strcmpi(ogExtension, '.vhdr')
-                        EEG = pop_loadbv(loadpath, ogfilename, [], []);
+                        EEG = pop_loadbv(ogFolderpath, [ogfilename, ogExtension], [], []);
                     else
                         EEG = pop_loadset(ogfilename, loadpath);
                     end
