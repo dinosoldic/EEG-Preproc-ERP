@@ -239,6 +239,9 @@ end
 % set warning for missing chanlocs
 warnMissChan = true;
 
+% disable new eeglab version check to run faster
+pop_editoptions('option_checkversion', false);
+
 %% Process data
 while true
 
@@ -480,15 +483,18 @@ while true
 
                 end
 
-                if ~exist('stimuliLabel', 'var') && any(ismember(cleanselection, [3, 4]))
+                if ~exist('stimuliLabel', 'var')
                     % Enter labels for epoching
                     stimuliLabel = inputdlg('Enter label for file''s name', 'Epoch Labels');
                     if isempty(stimuliLabel), stimuliLabel = ''; end
-
                 end
 
                 % Change filename for saving
-                fileNameSave = [ogfilename, '_', stimuliLabel{:}];
+                if isempty(stimuliLabel)
+                    fileNameSave = ogfilename;
+                else
+                    fileNameSave = [ogfilename, '_', stimuliLabel{:}];
+                end
 
                 % Step 6 Correct baseline
                 if any(cleanselection == 6)
@@ -548,7 +554,7 @@ while true
                         pop_eegplot(EEG, 1, 1, 1); % [1 channel data or 0 independent components], [1 for channel interpolation, 0 to skip interpolation], [1 to allow manual rejection]
                         uiwait(gcf);
                         close all
-
+ica
                         % Ask to reject componentes again
                         reICA = questdlg('Do you wish to reject ICA components once more?', 'Reject ICA', 'Yes', 'No', 'No');
                         if strcmpi(reICA, 'No'), break, end
@@ -718,16 +724,14 @@ while true
                     fprintf ('Deleting current dataset and importing raw data\n');
 
                     % Run eeglab and reset vars
-                    clear EEG;
-                    clear ALLEEG;
                     eeglab;
                     close all
 
                     % Load EEG data from .vhdr or .ahdr file or other
-                    if strcmpi(ogExtension, '.vhdr')
+                    if strcmp(ogExtension, '.vhdr') || strcmp(ogExtension, '.ahdr')
                         EEG = pop_loadbv(ogFolderpath, [ogfilename, ogExtension], [], []);
                     else
-                        EEG = pop_loadset(ogfilename, loadpath);
+                        EEG = pop_loadset(file);
                     end
 
                 end
@@ -788,6 +792,9 @@ while true
     end
 
 end
+
+% re-enable new eeglab version check
+pop_editoptions('option_checkversion', true);
 
 % Display completion
 fprintf('\n\t\t  /\\_/\\ \t  /\\_/\\ \n\t\t ( o.o )\t ( ^.^ )\n\t\t  > ^ <\t\t  > ^ <\n');
