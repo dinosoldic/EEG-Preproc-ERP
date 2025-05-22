@@ -554,7 +554,7 @@ while true
                         pop_eegplot(EEG, 1, 1, 1); % [1 channel data or 0 independent components], [1 for channel interpolation, 0 to skip interpolation], [1 to allow manual rejection]
                         uiwait(gcf);
                         close all
-ica
+                        
                         % Ask to reject componentes again
                         reICA = questdlg('Do you wish to reject ICA components once more?', 'Reject ICA', 'Yes', 'No', 'No');
                         if strcmpi(reICA, 'No'), break, end
