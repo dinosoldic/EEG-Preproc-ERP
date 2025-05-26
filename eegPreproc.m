@@ -240,6 +240,7 @@ end
 warnMissChan = true;
 
 % disable new eeglab version check to run faster
+eeglab('nogui');
 pop_editoptions('option_checkversion', false);
 
 %% Process data
@@ -778,7 +779,7 @@ while true
     end
 
     % Display completion
-    fprintf('\n-------Successfully completed %d files-------', numel(filelist));
+    fprintf('\n-------Successfully completed %d files-------\n', numel(filelist));
 
     %% Ask to run script on a different condition
     askConditionRerun = questdlg('Do you wish to clean a different condition?', 'Clean new condition', 'Yes', 'No', 'No');
