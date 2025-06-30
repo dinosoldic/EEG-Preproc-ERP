@@ -1,30 +1,40 @@
-function exportSPSS(ALLEEGDATA, exportTimeWin, timeVector, chanLabels)
-% exportSPSS(ALLEEGDATA, exportTimeWin, timeVector, chanLabels) exports
-% data from ALLEEGDATA to an SPSS-compatible CSV file.
+% exportSPSS Export EEG data summary to SPSS-compatible CSV and label files.
 %
-% Inputs:
-% - ALLEEGDATA: Struct containing EEG data organized by groups and conditions.
-% - exportTimeWin: 1x2 vector specifying the start and end in millisencods (ms) of the time window to export.
-% - timeVector: Time vector corresponding to the EEG data.
-% - chanLabels: Cell array of channel labels.
+%   exportSPSS(ALLEEGDATA, exportTimeWin, timeVector, chanLabels) exports
+%   average amplitude or latency data from ALLEEGDATA into a CSV file formatted
+%   for use in SPSS, JASP, JAMOVI, or any other statistical analysis software,
+%   along with a text file containing variable label information.
 %
-% Output:
-% - 'erpdataset.csv' file containing the exported data.
-% - 'erpdatalabels.txt' file containing relevant label information.
+%   Inputs:
+%     ALLEEGDATA     - Struct containing EEG data organized by groups and conditions.
+%     exportTimeWin  - 1x2 vector specifying the start and end (in milliseconds) 
+%                      of the time window to average and export.
+%     timeVector     - Vector of time points corresponding to the EEG data samples.
+%     chanLabels     - Cell array of channel label strings.
 %
-% If any input argument is not provided, the user will be prompted to select
-% the necessary file or enter the required information.
+%   Outputs:
+%     - 'erpdataset_amplitude.csv': CSV file with exported amplitude data, suitable for SPSS import.
+%     - 'erpdataset_latency.csv': CSV file with exported latency data, suitable for SPSS import.
+%     - 'erpdatalabels.txt': Text file containing group codes, selected time window,
+%                            and channel names.
 %
-% Example usage:
-%   exportSPSS(ALLEEGDATA);
-%   exportSPSS(ALLEEGDATA, [start end]);
-%   exportSPSS(ALLEEGDATA, [start end], EEG.times);
-%   exportSPSS(ALLEEGDATA, [start end], EEG.times, {EEG.chanlocs.labels});
+%   If any input is omitted, the function will prompt the user to select or enter
+%   the required data interactively.
 %
-% See also: eegPreproc, eegPlotERP, EEGLAB
+%   Example usage:
+%       exportSPSS(ALLEEGDATA);
+%       exportSPSS(ALLEEGDATA, [100 200]);
+%       exportSPSS(ALLEEGDATA, [100 200], EEG.times);
+%       exportSPSS(ALLEEGDATA, [100 200], EEG.times, {EEG.chanlocs.labels});
 %
+%   Author: Dino Soldic
+%   Email: dino.soldic@urjc.es
+%   Date: 2025-06-30
+%
+%   See also: eegPreproc, eegPlotERP, EEGLAB
 
-%% Check for argins
+function exportSPSS(ALLEEGDATA, exportTimeWin, timeVector, chanLabels, feature, saveTableSPSSPath)
+% Check for argins
 if nargin < 1
     % Ask for dataset
     [ALLEEGFile, ALLEEGPath] = uigetfile('*.mat', 'Select file containing dataset');
@@ -57,6 +67,16 @@ if nargin < 4
 
     % Extract chanlabels
     chanLabels = {EEG.chanlocs.labels};
+end
+if nargin < 5
+    feature = questdlg('Do you wish to export peak latency or average peak amplitude?', 'Feature to export', 'Latency', 'Amplitude', 'All', 'Amplitude');
+    if isempty(feature), error('You need to select a feature to be extracted from the EEG data'); end
+    if strcmp(feature, 'Latency'), feature = 1; elseif strcmp(feature, 'Amplitude'), feature = 2; else feature = 3; end
+end
+if nargin < 6
+    saveTableSPSSPath = uigetdir(pwd, 'Select folder to save the exported dataset');
+    if saveTableSPSSPath == 0, saveTableSPSSPath = pwd; end
+    fprintf('Exported data will be saved to:\n %s\n', saveTableSPSSPath);
 end
 
 %% Convert data to SPSS format
@@ -134,10 +154,7 @@ end
 tableSPSS = cell2table(tableData, 'VariableNames', string(tableHeader));
 
 %% Save
-saveTableSPSSPath = uigetdir(pwd, 'Select folder to save the exported dataset');
-if saveTableSPSSPath == 0, saveTableSPSSPath = pwd; end
-
-writetable(tableSPSS, fullfile(saveTableSPSSPath, 'erpdataset.csv'));
+writetable(tableSPSS, fullfile(saveTableSPSSPath, 'erpdataset_amplitude.csv'));
 
 % Copy labels to txt
 labelsFile = fullfile(saveTableSPSSPath, 'erpdatalabels.txt');

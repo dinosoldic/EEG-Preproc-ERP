@@ -1,10 +1,27 @@
-function expandPlot(axisTime, meanData, semData, colors, chanIdx, chanLabel, legendLabels, doPlotSem, lineStyles)
-    % This function is called internally by eegPlotERP and is not intended for
-    % standalone use.
-    %
-    % See also: eegPlotERP
-    %
+% EXPANDPLOT Helper function for plotting ERP waveforms with optional SEM shading.
+%
+%  This function is intended for internal use by eegPlotERP and is not
+%  designed for standalone use.
+%
+%  INPUTS:
+%      axisTime    - Vector of time points for the x-axis (e.g., in ms).
+%      meanData    - Cell array of mean ERP data matrices (channels × time).
+%                    Can be 1D (conditions) or 2D (conditions × groups).
+%      semData     - Cell array of SEM data matrices matching meanData size.
+%      colors      - Matrix of RGB color values for plotting each group/condition.
+%      chanIdx     - Index of the channel to plot.
+%      chanLabel   - String label for the plotted channel.
+%      legendLabels- Cell array of legend entries corresponding to meanData.
+%      doPlotSem   - Boolean flag to plot SEM shading (true/false).
+%      lineStyles  - Cell array of line style strings for multiple conditions.
+%
+% Author: Dino Soldic
+% Email: dino.soldic@urjc.es
+% Date: 2025-06-30
+%
+% See also: eegPlotERP
 
+function expandPlot(axisTime, meanData, semData, colors, chanIdx, chanLabel, legendLabels, doPlotSem, lineStyles)
     %% check inputs
     if ~doPlotSem
         legendLabels = legendLabels(strlength(legendLabels) > 0);

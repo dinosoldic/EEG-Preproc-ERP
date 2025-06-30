@@ -1,11 +1,15 @@
-% Convert BrainVision .dat files to MVPAlab format using EEGLAB functions
 %
-% This script processes EEG data exported from BrainVision in .dat format
-% to MVPAlab format. It requires corresponding .vhdr, .dat, and .vmrk files.
+% This script processes EEG data exported from BrainVision in .dat or .eeg format
+% to MVPAlab format. It requires corresponding .vhdr, .dat/.eeg, and .vmrk files for.
 % The script can handle segmented data and allows the user to specify various
 % cleaning and preprocessing steps, including channel removal, resampling,
 % filtering, epoching, baseline correction, ICA, interpolation, and more.
 % The final data can be saved in .set (EEGLAB format), .mat (MATLAB format), or both.
+%
+% If channel coordinates are detected to be missing, the user can load them
+% from a BrainVision .bvef or .vhdr file, or use layouts present in EEGLAB or
+% FieldTrip source files. This requires the additional eegImportChanlocs.m
+% script available in the same github repository.
 %
 % Once the data is saved in either .set or .mat it can be inputed once
 % again into the script to perform additional steps if needed.
@@ -23,6 +27,11 @@
 %
 % Ensure you have EEGLAB installed and added to the MATLAB path.
 %
+% Author: Dino Soldic
+% Email: dino.soldic@urjc.es
+% Date: 2025-06-30
+%
+% See also: eegPlotERP
 
 %% Clean Matlab
 clear; clc;

@@ -1,6 +1,42 @@
-clear; clc;
+% EEG Preprocessing and Deconvolution with Unfold Toolbox
+%
+% This script loads EEG data files (.vhdr, .mat, .set) from a user-selected
+% folder, performs preprocessing steps including filtering, channel removal,
+% resampling, and artifact rejection, then applies the Unfold toolbox to
+% perform linear deconvolution of overlapping event-related potentials (ERPs).
+%
+% User inputs include:
+%   - Selection of EEG data files
+%   - Save directory and label for processed data
+%   - Stimulus event labels for two stimulus types (comma-separated)
+%   - Epoch time window (in seconds)
+%   - Filter cutoff frequencies (Hz)
+%   - Voltage threshold for automatic artifact rejection
+%   - Choice of which stimulus data to extract
+%   - Option to resample EEG data and specify new sampling frequency
+%   - Option to remove specific EEG channels before processing
+%   - Option to load missing channel location coordinates
+%
+% The script runs EEGLAB in the background for each file, imports data,
+% prepares design matrices for deconvolution, detects and excludes artifacts,
+% fits a general linear model (GLM) using Unfold, extracts deconvolved ERPs,
+% baseline corrects them, and saves the cleaned and processed data.
+%
+% Processed data is saved as a MATLAB .mat file for each subject with the 
+% specified label appended to the original filename.
+%
+% An error log file ('errorSubjects.txt') is maintained in the save directory
+% to track any files that failed processing.
+%
+% Requirements:
+%   - EEGLAB and Unfold toolbox (https://www.unfoldtoolbox.org/)
+%
+% Author: Dino Soldic
+% Email: dino.soldic@urjc.es
+% Date: 2025-06-30
 
 %% Prep data
+clear; clc;
 % Select data folder
 folderpath = uigetdir(pwd, 'Select folder with files to load ');
 

@@ -8,20 +8,35 @@
 %     Study
 %     ├── Group1
 %     │   ├── Condition1
+%     │   │   ├── data1
+%     │   │   └── dataN
 %     │   └── Condition2
+%     │       ├── data1
+%     │       └── dataN
 %     ├── Group2
 %     │   ├── Condition1
+%     │   │   ├── data1
+%     │   │   └── dataN
 %     │   └── Condition2
+%     │       ├── data1
+%     │       └── dataN
 %     └── Group3
 %         ├── Condition1
+%         │   ├── data1
+%         │   └── dataN
 %         └── Condition2
+%             ├── data1
+%             └── dataN
 %
 % Points to keep in mind:
-%   - You can have as many groups or conditions as you want, as long as
-%     they are organized as instructed.
-%   - EEG data needs to be in the EEG structure format, exported from
-%     EEGLAB post-processing.
-%   - For topoplots, EEGLAB is required.
+%   - You can have as many groups or conditions as needed, as long as they
+%     are organized according to the instructions.
+%   - If you have only conditions without groups, create a "Group1" folder
+%     and place all condition folders inside it.
+%   - If you have only one condition per group, create multiple "Group" folders,
+%     each containing a "Condition1" folder with the corresponding data files.
+%   - EEG data must be in EEGLAB’s EEG structure format, exported after preprocessing.
+%   - EEGLAB is required for topoplot generation.
 %
 % This script performs the following steps:
 %   1. Prompts the user to select the directory where the study data is located.
@@ -37,11 +52,11 @@
 %   5. Provides options to save the animated plots or movies.
 %   6. Provides option to export ERP data to SPSS.
 %
-% Example:
-%   eegPlotErp
+% Author: Dino Soldic
+% Email: dino.soldic@urjc.es
+% Date: 2025-06-30
 %
 % See also: eegPreproc, exportSPSS, EEGLAB
-%
 
 %% Clean and Prep data
 clear; clc;
@@ -783,15 +798,28 @@ end
 exportPrompt = questdlg('Do you wish to export data to SPSS?', 'SPSS Export', 'Yes', 'No', 'Yes');
 
 if strcmpi(exportPrompt, 'yes')
+    % Determine feature to export from data
+    while true
+        feature = questdlg('Do you wish to export peak latency or average peak amplitude?', 'Feature to export', 'Latency', 'Amplitude', 'All', 'Amplitude');
+        if ~isempty(feature), break, end
+    end
+    % Recode it
+    if strcmp(feature, 'Latency'), feature = 1; elseif strcmp(feature, 'Amplitude'), feature = 2; else feature = 3; end
+
     % Ask for time win
     while true
         exportTimeWin = inputdlg({'Enter the start of the time window (ms) to export', 'Enter the end of the time window (ms) to export'}, 'Export Time Window', 1, {'100', '200'});
         exportTimeWin = str2double(exportTimeWin);
         if isempty(exportTimeWin) || any(isnan(exportTimeWin)), fprintf("Enter valid numeric value.\n"); else, break, end
     end
+    
+    % Get savepath
+    saveTableSPSSPath = uigetdir(pwd, 'Select folder to save the exported dataset');
+    if saveTableSPSSPath == 0, saveTableSPSSPath = pwd; end
+    fprintf('Exported data will be saved to:\n %s\n', saveTableSPSSPath);
 
     % Call export func and pass params
-    exportSPSS(ALLEEGDATA, exportTimeWin, axisTime, chanLabels);
+    exportSPSS(ALLEEGDATA, exportTimeWin, axisTime, chanLabels, feature, saveTableSPSSPath);
 
 else
     % Display completion

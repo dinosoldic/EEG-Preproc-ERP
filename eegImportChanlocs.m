@@ -1,3 +1,24 @@
+%
+% Helper function to import channel locations into an EEG structure
+%
+% Inputs:
+%   EEG          - EEGLAB EEG structure
+%   chanlocsPath - Path to channel location file (.vhdr, .bvef, or others)
+%   ext          - File extension indicating type of chanloc file
+%
+% Output:
+%   EEG          - EEG structure updated with channel location info
+%
+% Supports BrainVision formats (.vhdr, .bvef) with conversion of spherical
+% coordinates to topographic and cartesian. For other formats, calls EEGLAB’s
+% pop_chanedit to load channel locations.
+%
+% Intended as a helper within the EEG preprocessing workflow.
+%
+% Author: Dino Soldic
+% Email: dino.soldic@urjc.es
+% Date: 2025-06-30
+
 function EEG = eegImportChanlocs(EEG, chanlocsPath, ext)
 
     switch ext
