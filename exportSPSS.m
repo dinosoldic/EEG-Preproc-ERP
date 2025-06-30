@@ -93,7 +93,8 @@ numChan = size(ALLEEGDATA.(groupFields{1}).(conditionFields{1})(1).meanData, 1);
 
 % Initialize vars
 groupDisplacement = 0;
-tableData = {};
+tableDataAmp = {};
+tableDataLat = {};
 
 % Transform to table
 % Loop through groups
@@ -110,34 +111,61 @@ for groupFieldsIdx = 1 : numel(groupFields)
             % Get data from struct
             dataToTable = ALLEEGDATA.(groupField).(conditionField)(dataIdx).meanData;
 
-            % Set up displacement for each cond
-            displacement = 3 + (conditionFieldsIdx - 1) * numChan;
-
             % Extract time win
-            [~, exportStartTimeWin] = min(abs(timeVector - exportTimeWin(1)));
+            [~, exportStartTimeWin] = min(abs(timeVector - exportTimeWin(1))); % closest to 0 is the desired idx. Accounts for time(ms) not being in timeVector.
             [~, exportEndTimeWin] = min(abs(timeVector - exportTimeWin(2)));
 
-            dataToTable = mean(dataToTable(:, exportStartTimeWin : exportEndTimeWin), 2);
+            if feature == 1 || feature == 3
+                % Set up displacement for each cond
+                displacement = 3 + (conditionFieldsIdx - 1) * numChan;
 
-            % Populate subj code
-            tableData{dataIdx + groupDisplacement, 1} = dataIdx + groupDisplacement;
+                dataToTableAmp = mean(dataToTable(:, exportStartTimeWin : exportEndTimeWin), 2);
 
-            % Populate group code
-            tableData{dataIdx + groupDisplacement, 2} = groupNum(groupFieldsIdx);
+                % Populate subj code
+                tableDataAmp{dataIdx + groupDisplacement, 1} = dataIdx + groupDisplacement;
 
-            % Populate voltages
-            for dataPointIdx = 1 : numChan
-                tableData{dataIdx + groupDisplacement, displacement} = dataToTable(dataPointIdx);
+                % Populate group code
+                tableDataAmp{dataIdx + groupDisplacement, 2} = groupNum(groupFieldsIdx);
 
-                displacement = displacement + 1;
+                % Populate voltages
+                for dataPointIdx = 1 : numChan
+                    tableDataAmp{dataIdx + groupDisplacement, displacement} = dataToTableAmp(dataPointIdx);
+
+                    displacement = displacement + 1;
+                end
             end
+            if feature == 2 || feature == 3
+                % Set up displacement for each cond
+                displacement = 3 + (conditionFieldsIdx - 1) * numChan;
+
+                % find timepoint with max voltage
+                [~, maxIndices] = max(dataToTable(:, exportStartTimeWin : exportEndTimeWin), [], 2);
+                timeVectorLat = timeVector(exportStartTimeWin : exportEndTimeWin);
+                dataToTableLat = timeVectorLat(maxIndices);   
+
+                % Populate subj code
+                tableDataLat{dataIdx + groupDisplacement, 1} = dataIdx + groupDisplacement;
+
+                % Populate group code
+                tableDataLat{dataIdx + groupDisplacement, 2} = groupNum(groupFieldsIdx);
+
+                % Populate voltages
+                for dataPointIdx = 1 : numChan
+                    tableDataLat{dataIdx + groupDisplacement, displacement} = dataToTableLat(dataPointIdx);
+
+                    displacement = displacement + 1;
+                end
+            end
+
+            
         end
     end
     % Refresh displacement for groups
-    groupDisplacement = size(tableData, 1);
+    groupDisplacement = size(tableDataAmp, 1);
 end
 
-% Make table header
+%% Make table 
+% header
 tableHeader = cell(1, 2 + numChan * numel(conditionFields));
 
 tableHeader{1} = "Subject";
@@ -151,11 +179,15 @@ for tableHeaderIdx = 1 : numel(conditionFields)
     end
 end
 
-% Make table
-tableSPSS = cell2table(tableData, 'VariableNames', string(tableHeader));
-
-%% Save
-writetable(tableSPSS, fullfile(saveTableSPSSPath, 'erpdataset_amplitude.csv'));
+% Data and save
+if feature == 1 || feature == 3
+    tableSPSSAmp = cell2table(tableDataAmp, 'VariableNames', string(tableHeader));
+    writetable(tableSPSSAmp, fullfile(saveTableSPSSPath, 'erpdataset_amplitude.csv'));
+end
+if feature ==2 || feature == 3
+    tableSPSSLat = cell2table(tableDataLat, 'VariableNames', string(tableHeader));
+    writetable(tableSPSSLat, fullfile(saveTableSPSSPath, 'erpdataset_latency.csv'));
+end
 
 % Copy labels to txt
 labelsFile = fullfile(saveTableSPSSPath, 'erpdatalabels.txt');
