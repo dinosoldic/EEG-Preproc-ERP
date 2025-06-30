@@ -1,3 +1,4 @@
+% 
 % exportSPSS Export EEG data summary to SPSS-compatible CSV and label files.
 %
 %   exportSPSS(ALLEEGDATA, exportTimeWin, timeVector, chanLabels) exports

@@ -1,3 +1,4 @@
+% 
 % EEGPLOTERP Plot Event-Related Potentials (ERPs) from EEG data.
 %
 %   EEGPLOTERP plots ERPs from EEG data stored in the specified

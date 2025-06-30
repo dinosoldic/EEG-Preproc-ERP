@@ -1,3 +1,4 @@
+%
 % EEG Preprocessing and Deconvolution with Unfold Toolbox
 %
 % This script loads EEG data files (.vhdr, .mat, .set) from a user-selected
