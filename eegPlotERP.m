@@ -180,13 +180,13 @@ while true
     [plotOptionsSelection, ~] = listdlg('ListString', plotOptions, 'PromptString', 'Select plots:', 'SelectionMode', 'multiple');
 
     % ask to plot sem
-    if ~isempty(plotOptionsSelection)
-        askPlotSem = questdlg('Do you wish to plot SEM alongside mean?', 'Plot SEM', 'Yes', 'No', 'Yes');
+    if ~isempty(plotOptionsSelection) && ismember([1, 2, 3], plotOptionsSelection)
+        plotSem = questdlg('Do you wish to plot SEM alongside mean?', 'Plot SEM', 'Yes', 'No', 'Yes');
 
-        if strcmp(askPlotSem, 'Yes')
-            askPlotSem = true;
+        if strcmp(plotSem, 'Yes')
+            plotSem = true;
         else
-            askPlotSem = false;
+            plotSem = false;
         end
 
     end
@@ -271,7 +271,7 @@ while true
                     plotSEM = resultToPlotSEM{plotResultIdx};
 
                     % Plot SEM
-                    if askPlotSem
+                    if plotSem
                         fill([axisTime, fliplr(axisTime)], ...
                             [plotMean(chanIdx, :) + plotSEM(chanIdx, :), ...
                              fliplr(plotMean(chanIdx, :) - plotSEM(chanIdx, :))], ...
@@ -293,7 +293,7 @@ while true
                 title(chanLabels{chanIdx});
 
                 % Add func for bigger plot
-                set(gca, 'ButtonDownFcn', @(src, event)expandPlot(axisTime, resultToPlotMean, resultToPlotSEM, colors, chanIdx, chanLabels{chanIdx}, legendLabels, askPlotSem));
+                set(gca, 'ButtonDownFcn', @(src, event)expandPlot(axisTime, resultToPlotMean, resultToPlotSEM, colors, chanIdx, chanLabels{chanIdx}, legendLabels, plotSem));
 
                 hold off;
             end
@@ -384,7 +384,7 @@ while true
                     plotSEM = resultToPlotSEM{plotResultIdx};
 
                     % Plot SEM
-                    if askPlotSem
+                    if plotSem
                         fill([axisTime, fliplr(axisTime)], ...
                             [plotMean(chanIdx, :) + plotSEM(chanIdx, :), ...
                              fliplr(plotMean(chanIdx, :) - plotSEM(chanIdx, :))], ...
@@ -406,7 +406,7 @@ while true
                 title(chanLabels{chanIdx});
 
                 % Add func for bigger plot
-                set(gca, 'ButtonDownFcn', @(src, event)expandPlot(axisTime, resultToPlotMean, resultToPlotSEM, colors, chanIdx, chanLabels{chanIdx}, legendLabels, askPlotSem));
+                set(gca, 'ButtonDownFcn', @(src, event)expandPlot(axisTime, resultToPlotMean, resultToPlotSEM, colors, chanIdx, chanLabels{chanIdx}, legendLabels, plotSem));
                 hold off;
             end
 
@@ -513,7 +513,7 @@ while true
                         plotSEM = resultToPlotSEM{plotResultIdxRow, plotResultIdx};
 
                         % Plot SEM
-                        if askPlotSem
+                        if plotSem
                             fill([axisTime, fliplr(axisTime)], ...
                                 [plotMean(chanIdx, :) + plotSEM(chanIdx, :), ...
                                  fliplr(plotMean(chanIdx, :) - plotSEM(chanIdx, :))], ...
@@ -538,7 +538,7 @@ while true
 
                 % Add func for bigger plot
                 set(gca, 'ButtonDownFcn', @(src, event)expandPlot(axisTime, resultToPlotMean, resultToPlotSEM, colors, chanIdx, ...
-                    chanLabels{chanIdx}, legendLabels, askPlotSem, lineStyles));
+                    chanLabels{chanIdx}, legendLabels, plotSem, lineStyles));
                 hold off;
             end
 
@@ -788,7 +788,7 @@ end
 %% Ask to save current ALLEEG
 saveALLEEG = questdlg('Do you wish to save current data?', 'Save Data', 'Yes', 'No', 'Yes');
 
-if strcmpi(saveALLEEG, 'yes')
+if strcmp(saveALLEEG, 'Yes')
     saveALLEEGPath = uigetdir(pwd, 'Select folder to save current dataset');
     save(fullfile(saveALLEEGPath, "ALLEEGDATA"), "ALLEEGDATA");
 end
@@ -798,14 +798,14 @@ end
 % Ask to export
 exportPrompt = questdlg('Do you wish to export data to SPSS?', 'SPSS Export', 'Yes', 'No', 'Yes');
 
-if strcmpi(exportPrompt, 'yes')
+if strcmp(exportPrompt, 'Yes')
     % Determine feature to export from data
     while true
         feature = questdlg('Do you wish to export peak latency or average peak amplitude?', 'Feature to export', 'Latency', 'Amplitude', 'All', 'Amplitude');
         if ~isempty(feature), break, end
     end
     % Recode it
-    if strcmp(feature, 'Latency'), feature = 1; elseif strcmp(feature, 'Amplitude'), feature = 2; else feature = 3; end
+    if strcmp(feature, 'Latency'), feature = 1; elseif strcmp(feature, 'Amplitude'), feature = 2; else, feature = 3; end
 
     % Ask for time win
     while true

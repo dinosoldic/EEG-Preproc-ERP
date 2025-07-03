@@ -72,7 +72,7 @@ end
 if nargin < 5
     feature = questdlg('Do you wish to export peak latency or average peak amplitude?', 'Feature to export', 'Latency', 'Amplitude', 'All', 'Amplitude');
     if isempty(feature), error('You need to select a feature to be extracted from the EEG data'); end
-    if strcmp(feature, 'Latency'), feature = 1; elseif strcmp(feature, 'Amplitude'), feature = 2; else feature = 3; end
+    if strcmp(feature, 'Latency'), feature = 1; elseif strcmp(feature, 'Amplitude'), feature = 2; else, feature = 3; end
 end
 if nargin < 6
     saveTableSPSSPath = uigetdir(pwd, 'Select folder to save the exported dataset');
@@ -115,7 +115,32 @@ for groupFieldsIdx = 1 : numel(groupFields)
             [~, exportStartTimeWin] = min(abs(timeVector - exportTimeWin(1))); % closest to 0 is the desired idx. Accounts for time(ms) not being in timeVector.
             [~, exportEndTimeWin] = min(abs(timeVector - exportTimeWin(2)));
 
+            % Latency
             if feature == 1 || feature == 3
+                % Set up displacement for each cond
+                displacement = 3 + (conditionFieldsIdx - 1) * numChan;
+
+                % find timepoint with max voltage
+                [~, maxIndices] = max(dataToTable(:, exportStartTimeWin : exportEndTimeWin), [], 2);
+                timeVectorLat = timeVector(exportStartTimeWin : exportEndTimeWin);
+                dataToTableLat = timeVectorLat(maxIndices);
+
+                % Populate subj code
+                tableDataLat{dataIdx + groupDisplacement, 1} = dataIdx + groupDisplacement;
+
+                % Populate group code
+                tableDataLat{dataIdx + groupDisplacement, 2} = groupNum(groupFieldsIdx);
+
+                % Populate voltages
+                for dataPointIdx = 1 : numChan
+                    tableDataLat{dataIdx + groupDisplacement, displacement} = dataToTableLat(dataPointIdx);
+
+                    displacement = displacement + 1;
+                end
+            end
+
+            % Amplitude
+            if feature == 2 || feature == 3
                 % Set up displacement for each cond
                 displacement = 3 + (conditionFieldsIdx - 1) * numChan;
 
@@ -134,31 +159,9 @@ for groupFieldsIdx = 1 : numel(groupFields)
                     displacement = displacement + 1;
                 end
             end
-            if feature == 2 || feature == 3
-                % Set up displacement for each cond
-                displacement = 3 + (conditionFieldsIdx - 1) * numChan;
-
-                % find timepoint with max voltage
-                [~, maxIndices] = max(dataToTable(:, exportStartTimeWin : exportEndTimeWin), [], 2);
-                timeVectorLat = timeVector(exportStartTimeWin : exportEndTimeWin);
-                dataToTableLat = timeVectorLat(maxIndices);   
-
-                % Populate subj code
-                tableDataLat{dataIdx + groupDisplacement, 1} = dataIdx + groupDisplacement;
-
-                % Populate group code
-                tableDataLat{dataIdx + groupDisplacement, 2} = groupNum(groupFieldsIdx);
-
-                % Populate voltages
-                for dataPointIdx = 1 : numChan
-                    tableDataLat{dataIdx + groupDisplacement, displacement} = dataToTableLat(dataPointIdx);
-
-                    displacement = displacement + 1;
-                end
-            end
-
             
         end
+
     end
     % Refresh displacement for groups
     groupDisplacement = size(tableDataAmp, 1);
@@ -180,13 +183,15 @@ for tableHeaderIdx = 1 : numel(conditionFields)
 end
 
 % Data and save
+% Latency
 if feature == 1 || feature == 3
-    tableSPSSAmp = cell2table(tableDataAmp, 'VariableNames', string(tableHeader));
-    writetable(tableSPSSAmp, fullfile(saveTableSPSSPath, 'erpdataset_amplitude.csv'));
-end
-if feature ==2 || feature == 3
     tableSPSSLat = cell2table(tableDataLat, 'VariableNames', string(tableHeader));
     writetable(tableSPSSLat, fullfile(saveTableSPSSPath, 'erpdataset_latency.csv'));
+end
+% Amplitude
+if feature == 2 || feature == 3
+    tableSPSSAmp = cell2table(tableDataAmp, 'VariableNames', string(tableHeader));
+    writetable(tableSPSSAmp, fullfile(saveTableSPSSPath, 'erpdataset_amplitude.csv'));
 end
 
 % Copy labels to txt
