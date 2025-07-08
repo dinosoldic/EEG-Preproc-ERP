@@ -662,8 +662,8 @@ while true
         end
 
         % Above, convert latencies in ms to data point indices
-        pnts1 = round(eeg_lat2point(movie2DParams(1) / 1000, 1, srate, [min(axisTime) / 1000 max(axisTime) / 1000]));
-        pnts2 = round(eeg_lat2point(movie2DParams(2) / 1000, 1, srate, [min(axisTime) / 1000 max(axisTime) / 1000]));
+        pnts1 = round(eeg_lat2point(movie2DParams(1) / 1000, 1, srate, [min(axisTime) max(axisTime)]));
+        pnts2 = round(eeg_lat2point(movie2DParams(2) / 1000, 1, srate, [min(axisTime) max(axisTime)]));
         scalpERP = mean(topoDataMean(:, pnts1:pnts2), 3);
 
         % Smooth data
@@ -748,9 +748,9 @@ while true
         headplot('setup', chanlocs, 'STUDY_headplot.spl', headplotparams{:});
         close;
 
-        % Above, convert latencies in ms to data point indices
-        pnts1 = round(eeg_lat2point(movie3DParams(1) / 1000, 1, srate, [min(axisTime) / 1000 max(axisTime) / 1000]));
-        pnts2 = round(eeg_lat2point(movie3DParams(2) / 1000, 1, srate, [min(axisTime) / 1000 max(axisTime) / 1000]));
+        % Convert latencies in ms to data point indices
+        pnts1 = round(eeg_lat2point(movie3DParams(1) / 1000, 1, srate, [min(axisTime) max(axisTime)]));
+        pnts2 = round(eeg_lat2point(movie3DParams(2) / 1000, 1, srate, [min(axisTime) max(axisTime)]));
         scalpERP = mean(topoDataMean(:, pnts1:pnts2), 3);
 
         % Smooth data
@@ -780,7 +780,7 @@ while true
         delete('STUDY_headplot.spl', 'tmp.spl', 'tmp_file.loc');
     end
 
-    % Ask to continue plotting
+    %% Ask to continue plotting
     plotMore = questdlg('Do you wish to make a different plot or continue?', 'Plot More', 'Plot', 'Continue', 'Continue');
     if strcmpi(plotMore, 'continue'), break, end
 end
