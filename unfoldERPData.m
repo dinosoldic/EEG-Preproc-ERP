@@ -348,8 +348,13 @@ for i = selected_files
 
             EEG.ref = EEGb.ref;
 
+            % Make sure EEG.times is in the correct format
+            if max(EEG.times) < 100 && any(mod(EEG.times, 1) ~= 0)
+                EEG.times = EEG.times .* 1000;  % Convert seconds to ms
+            end
+
             % Correct baseline
-            blIndices = find(EEG.times >= -0.2 & EEG.times <= 0);
+            blIndices = find(EEG.times >= -200 & EEG.times <= 0);
             blMean = mean(EEG.data(:, blIndices), 2);
 
             EEG.data = EEG.data - blMean;

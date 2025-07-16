@@ -1,4 +1,4 @@
-% 
+%
 % EEGPLOTERP Plot Event-Related Potentials (ERPs) from EEG data.
 %
 %   EEGPLOTERP plots ERPs from EEG data stored in the specified
@@ -167,6 +167,11 @@ try
     chanlocs = EEG.chanlocs;
     srate = EEG.srate;
 
+    % Make sure EEG.times is in ms and not s
+    if max(axisTime) < 100 && any(mod(axisTime, 1) ~= 0)
+        axisTime = axisTime .* 1000;
+    end
+
 catch importError
     close(wb);
     error("Run script again after checking study folder's organization. ERROR: %s", importError.message);
@@ -274,7 +279,7 @@ while true
                     if plotSem
                         fill([axisTime, fliplr(axisTime)], ...
                             [plotMean(chanIdx, :) + plotSEM(chanIdx, :), ...
-                             fliplr(plotMean(chanIdx, :) - plotSEM(chanIdx, :))], ...
+                            fliplr(plotMean(chanIdx, :) - plotSEM(chanIdx, :))], ...
                             currentColor, 'FaceAlpha', .1, 'linestyle', 'none');
                     end
 
@@ -387,7 +392,7 @@ while true
                     if plotSem
                         fill([axisTime, fliplr(axisTime)], ...
                             [plotMean(chanIdx, :) + plotSEM(chanIdx, :), ...
-                             fliplr(plotMean(chanIdx, :) - plotSEM(chanIdx, :))], ...
+                            fliplr(plotMean(chanIdx, :) - plotSEM(chanIdx, :))], ...
                             currentColor, 'FaceAlpha', .1, 'linestyle', 'none');
                     end
 
@@ -516,7 +521,7 @@ while true
                         if plotSem
                             fill([axisTime, fliplr(axisTime)], ...
                                 [plotMean(chanIdx, :) + plotSEM(chanIdx, :), ...
-                                 fliplr(plotMean(chanIdx, :) - plotSEM(chanIdx, :))], ...
+                                fliplr(plotMean(chanIdx, :) - plotSEM(chanIdx, :))], ...
                                 currentColor, 'FaceAlpha', .1, 'linestyle', 'none');
                         end
 
@@ -813,7 +818,7 @@ if strcmp(exportPrompt, 'Yes')
         exportTimeWin = str2double(exportTimeWin);
         if isempty(exportTimeWin) || any(isnan(exportTimeWin)), fprintf("Enter valid numeric value.\n"); else, break, end
     end
-    
+
     % Get savepath
     saveTableSPSSPath = uigetdir(pwd, 'Select folder to save the exported dataset');
     if saveTableSPSSPath == 0, saveTableSPSSPath = pwd; end
