@@ -1,4 +1,4 @@
-# EEG Data Processing Project
+# EEG Data Processing and Analysis Project
 
 ## Project Overview
 This project provides a set of functions for preprocessing, plotting, and exporting EEG data for further analysis in SPSS. It utilizes the EEGLAB toolbox to facilitate these tasks and offers two primary methods for preprocessing data:
