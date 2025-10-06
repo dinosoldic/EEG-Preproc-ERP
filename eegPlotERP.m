@@ -55,7 +55,7 @@
 %
 % Author: Dino Soldic
 % Email: dino.soldic@urjc.es
-% Date: 2025-06-30
+%   Date: 2025-10-06
 %
 % See also: eegPreproc, exportSPSS, EEGLAB
 
@@ -178,7 +178,6 @@ catch importError
 end
 
 %% Plot ERP data
-
 while true
     % Select plots
     plotOptions = {'Group vs Group', 'Condition vs Condition', 'Groups vs Conditions', 'Topoplot', '2D Topoplot Movie', '3D Topoplot Movie'};
@@ -279,7 +278,7 @@ while true
                     if plotSem
                         fill([axisTime, fliplr(axisTime)], ...
                             [plotMean(chanIdx, :) + plotSEM(chanIdx, :), ...
-                            fliplr(plotMean(chanIdx, :) - plotSEM(chanIdx, :))], ...
+                             fliplr(plotMean(chanIdx, :) - plotSEM(chanIdx, :))], ...
                             currentColor, 'FaceAlpha', .1, 'linestyle', 'none');
                     end
 
@@ -392,7 +391,7 @@ while true
                     if plotSem
                         fill([axisTime, fliplr(axisTime)], ...
                             [plotMean(chanIdx, :) + plotSEM(chanIdx, :), ...
-                            fliplr(plotMean(chanIdx, :) - plotSEM(chanIdx, :))], ...
+                             fliplr(plotMean(chanIdx, :) - plotSEM(chanIdx, :))], ...
                             currentColor, 'FaceAlpha', .1, 'linestyle', 'none');
                     end
 
@@ -521,7 +520,7 @@ while true
                         if plotSem
                             fill([axisTime, fliplr(axisTime)], ...
                                 [plotMean(chanIdx, :) + plotSEM(chanIdx, :), ...
-                                fliplr(plotMean(chanIdx, :) - plotSEM(chanIdx, :))], ...
+                                 fliplr(plotMean(chanIdx, :) - plotSEM(chanIdx, :))], ...
                                 currentColor, 'FaceAlpha', .1, 'linestyle', 'none');
                         end
 
@@ -801,16 +800,18 @@ end
 %% Export to SPSS
 
 % Ask to export
-exportPrompt = questdlg('Do you wish to export data to SPSS?', 'SPSS Export', 'Yes', 'No', 'Yes');
+exportPrompt = questdlg('Do you wish to export data to SPSS/Excel?', 'Data Export', 'Yes', 'No', 'Yes');
 
 if strcmp(exportPrompt, 'Yes')
     % Determine feature to export from data
     while true
-        feature = questdlg('Do you wish to export peak latency or average peak amplitude?', 'Feature to export', 'Latency', 'Amplitude', 'All', 'Amplitude');
-        if ~isempty(feature), break, end
+        featureOptions = {'Average Amplitude', 'Latency', 'Peak Amplitude', 'Timepoints'};
+        [featureSelection, ~] = listdlg('ListString', featureOptions, 'PromptString', 'Select feature extraction:', 'SelectionMode', 'multiple');
+
+        if ~isempty(featureSelection), break, end
     end
-    % Recode it
-    if strcmp(feature, 'Latency'), feature = 1; elseif strcmp(feature, 'Amplitude'), feature = 2; else, feature = 3; end
+
+    feature = featureOptions(featureSelection);
 
     % Ask for time win
     while true
