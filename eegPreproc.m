@@ -287,9 +287,11 @@ while true
                     doLoadCoords = questdlg('The coordinates for your channels/electrodes are missing. Do you wish to load a file with their coordinates?', 'Missing Coordinates', 'Yes', 'No', 'Yes');
 
                     % get file and extension
-                    [chanlocsFile, chanlocsDir] = uigetfile('*.*', 'Select file containing EEG layout', 'MultiSelect', 'off');
-                    chanlocsPath = fullfile(chanlocsDir, chanlocsFile);
-                    [~, ~, chanlocsExt] = fileparts(chanlocsPath);
+                    if strcmp(doLoadCoords, 'Yes')
+                        [chanlocsFile, chanlocsDir] = uigetfile('*.*', 'Select file containing EEG layout', 'MultiSelect', 'off');
+                        chanlocsPath = fullfile(chanlocsDir, chanlocsFile);
+                        [~, ~, chanlocsExt] = fileparts(chanlocsPath);
+                    end
 
                 end
 
