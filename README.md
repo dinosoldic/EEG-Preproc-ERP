@@ -5,6 +5,11 @@ This project provides a set of functions for preprocessing, plotting, and export
 - The standard `eegPreproc` function, based on the [EEGLAB Toolbox](https://github.com/sccn/eeglab).
 - The alternative `unfoldERPData` function, based on the [Unfold Toolbox](https://github.com/unfoldtoolbox/unfold), which is designed for handling overlapping Event-Related Potentials (ERPs).
 
+## Guides
+| Language | Download |
+|----------|----------|
+| Español | [Download](docs/processing_and_plotting_guide_ES-ES.pdf) |
+
 ## Benefits
 - Streamlines the EEG data analysis process.
 - Integrates seamlessly with EEGLAB for effective data handling.
