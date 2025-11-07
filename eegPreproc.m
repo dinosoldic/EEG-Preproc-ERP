@@ -29,7 +29,7 @@
 %
 % Author: Dino Soldic
 % Email: dino.soldic@urjc.es
-% Date: 2025-06-30
+% Date: 2025-07-11
 %
 % See also: eegPlotERP
 
@@ -110,6 +110,12 @@ if any(cleanselection == 6)
         return
     end
 
+end
+
+if any(cleanselection == 7)
+    icaTypeOptions = {'runica', 'SOBI'};
+    [icaType, ~] = listdlg('ListString', icaTypeOptions, 'PromptString', {'Select the ICA algorithm that you', 'want to apply to your EEG data:'}, 'SelectionMode', 'single');
+    if isempty(icaType), fprintf('Operation canceled. Shutting down\n'); return, end
 end
 
 if any(cleanselection == 9)
@@ -519,7 +525,14 @@ while true
                     while true
 
                         try
-                            EEG = pop_runica(EEG, 'icatype', 'runica', 'extended', 1, 'interrupt', 'off');
+
+                            switch icaType
+                                case 1
+                                    EEG = pop_runica(EEG, 'icatype', 'runica', 'extended', 1, 'interrupt', 'off');
+                                case 2
+                                    EEG = pop_runica(EEG, 'icatype', 'sobi');
+                            end
+
                             break
                         catch
                             opts = struct('WindowStyle', 'non-modal', 'Interpreter', 'tex');
@@ -566,7 +579,7 @@ while true
                         pop_eegplot(EEG, 1, 1, 1); % [1 channel data or 0 independent components], [1 for channel interpolation, 0 to skip interpolation], [1 to allow manual rejection]
                         uiwait(gcf);
                         close all
-                        
+
                         % Ask to reject componentes again
                         reICA = questdlg('Do you wish to reject ICA components once more?', 'Reject ICA', 'Yes', 'No', 'No');
                         if strcmpi(reICA, 'No'), break, end
