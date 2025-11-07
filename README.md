@@ -8,7 +8,7 @@ This project provides a set of functions for preprocessing, plotting, and export
 ## Guides
 | Language | Download |
 |----------|----------|
-| Español | [Download](docs/processing_and_plotting_guide_ES-ES.pdf) |
+| Spanish | [Download](docs/processing_and_plotting_guide_ES-ES.pdf) |
 
 ## Benefits
 - Streamlines the EEG data analysis process.
