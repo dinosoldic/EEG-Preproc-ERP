@@ -39,7 +39,8 @@ clear; clc;
 %% Ask user for parameters
 
 cleanoptions = {'Resample', 'Single EEG filter', 'Multi EEG filter', 'ERP epoch data', 'RS epoch data', 'Correct baseline', 'Reject with ICA', ...
-                    'Interpolate', 'Reject voltage outliers', 'Reject abnormal spectra', 'Re-reference', 'Plot ERPs', 'Transform to Fieldtrip'};
+                    'Interpolate', 'Reject voltage outliers', 'Reject abnormal spectra', 'Re-reference', 'Plot ERPs', 'Transform to Fieldtrip', ...
+                'Transform to LORETA (RS)'};
 [cleanselection, ~] = listdlg('ListString', cleanoptions, 'PromptString', 'Select cleaning steps:', 'SelectionMode', 'multiple');
 
 if isempty(cleanselection), fprintf('Operation canceled. Shutting down\n'); return, end
@@ -169,14 +170,14 @@ filelist = fullfile(loadpath, loadfiles);
 if ~iscell(filelist), filelist = {filelist}; end
 
 % Define savepath
-savepath = uigetdir(pwd, 'Select path to save the data');
-if savepath == 0, fprintf('Operation canceled. Shutting down\n'); return, end
+rawSavepath = uigetdir(pwd, 'Select path to save the data');
+if rawSavepath == 0, fprintf('Operation canceled. Shutting down\n'); return, end
 
 % make mat ft folder if selected
 if any(cleanselection == 13)
 
     % Set save path
-    savepath_ft = fullfile(savepath, 'ft_mat_files');
+    savepath_ft = fullfile(rawSavepath, 'ft_mat_files');
 
     % Check folder
     if ~exist(savepath_ft, 'dir'), mkdir(savepath_ft); end
@@ -192,7 +193,7 @@ if strcmpi(saveformat, 'set')
     fprintf('Data will be saved as .set file.\n');
 
     % Set save path
-    savepath_set = fullfile(savepath, 'set_files');
+    savepath_set = fullfile(rawSavepath, 'set_files');
     icaSaveFolderPath = fullfile(savepath_set, 'preIca');
     rejSaveFolderPath = fullfile(savepath_set, 'preRej');
 
@@ -209,7 +210,7 @@ elseif strcmpi(saveformat, 'mat')
     fprintf('Data will be saved as .mat file.\n');
 
     % Set save path
-    savepath_mat = fullfile(savepath, 'mat_files');
+    savepath_mat = fullfile(rawSavepath, 'mat_files');
     icaSaveFolderPath = fullfile(savepath_mat, 'preIca');
     rejSaveFolderPath = fullfile(savepath_mat, 'preRej');
 
@@ -226,8 +227,8 @@ elseif strcmpi(saveformat, 'both')
     fprintf('Data will be saved as both .set and .mat file.\n');
 
     % Set save path
-    savepath_mat = fullfile(savepath, 'mat_files');
-    savepath_set = fullfile(savepath, 'set_files');
+    savepath_mat = fullfile(rawSavepath, 'mat_files');
+    savepath_set = fullfile(rawSavepath, 'set_files');
 
     % Update savepath
     savepath = struct();
@@ -749,6 +750,9 @@ while true
                     fprintf ('Deleting current dataset and importing raw data\n');
 
                     % Run eeglab and reset vars
+                    EEG = [];
+                    ALLEEG = [];
+                    ALLCOM = {};
                     eeglab;
                     close all
 
@@ -785,8 +789,24 @@ while true
             % transform and save to FT
             if any(cleanselection == 13)
 
+                fprintf('Exporting to FieldTrip...\n');
                 data = eeglab2fieldtrip(EEG, 'raw', 'none');
                 save(fullfile(savepath_ft, fileNameSave), 'data');
+
+            end
+
+            % transform and save to LORETA
+            if any(cleanselection == 14)
+
+                fprintf('Exporting to LORETA...\n');
+                loretaDir = fullfile(rawSavepath, fileNameSave);
+                if ~isfolder(loretaDir), mkdir(loretaDir); end
+
+                for epIdx = 1:size(EEG.data, 3)
+
+                    writematrix(EEG.data(:, :, epIdx)', sprintf("%s\\%s_%d.asc", loretaDir, fileNameSave, epIdx), "FileType", "text", "Delimiter", "\t"); % loreta needs text tab delimited
+
+                end
 
             end
 
