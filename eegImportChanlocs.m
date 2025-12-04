@@ -120,8 +120,6 @@ function EEG = eegImportChanlocs(EEG, chanlocsPath, ext)
             EEG = eeg_checkset(EEG);
 
         case '.elc'
-            EEG = pop_biosig('C:\Users\dsold\OneDrive - Universidad Rey Juan Carlos\Doc\datos\epimemo FM RS\loreta\template EEG\raw\sub-001_ses-1_task-EyesClosed_acq-pre_eeg.edf');
-
             % Open file and read lines
             fid = fopen(chanlocsPath, 'r');
             lines = textscan(fid, '%s', 'Delimiter', '\n');
