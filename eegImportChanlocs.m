@@ -119,45 +119,6 @@ function EEG = eegImportChanlocs(EEG, chanlocsPath, ext)
 
             EEG = eeg_checkset(EEG);
 
-        case '.elc'
-            % Open file and read lines
-            fid = fopen(chanlocsPath, 'r');
-            lines = textscan(fid, '%s', 'Delimiter', '\n');
-            fclose(fid);
-            lines = lines{1};
-
-            % Extract labels and coords
-            layLabelsStart = find(contains(lines, 'Labels')) + 1;
-            layLabelsEnd = numel(lines);
-            layCoordsStart = find(contains(lines, 'Positions'), 1, "last") + 1;
-            layCoordsEnd = layLabelsStart - 2;
-
-            layLabels = lines(layLabelsStart:layLabelsEnd);
-            layCoords = lines(layCoordsStart:layCoordsEnd);
-
-            % Find existing chans
-            [~, idxLay] = intersect(layLabels, {EEG.chanlocs.labels}, 'stable');
-
-            % make new temp lay file
-            tempLay = [lines(1:layCoordsStart - 3); {sprintf('NumberPositions=->%d', length(idxLay))}; {'Positions'}; layCoords(idxLay); {'Labels'}; layLabels(idxLay)];
-
-            % Write temporary file
-            tempPath = fullfile(pwd, 'temp.elc');
-            fid = fopen(tempPath, 'w');
-
-            for i = 1:length(tempLay)
-                fprintf(fid, '%s\n', tempLay{i});
-            end
-
-            fclose(fid);
-
-            % Load positions into EEGLAB
-            EEG = pop_chanedit(EEG, 'load', tempPath);
-            EEG = eeg_checkset(EEG);
-
-            % Delete temp file
-            delete(tempPath);
-
         otherwise
             EEG = pop_chanedit(EEG, 'lookup', chanlocsPath);
             EEG = eeg_checkset(EEG);
