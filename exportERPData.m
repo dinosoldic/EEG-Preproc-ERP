@@ -232,17 +232,8 @@ function exportERPData(ALLEEGDATA, exportTimeWin, timeVector, chanLabels, featur
                     % LORETA
                     if isLORETAExp
 
-                        loretaPathSub = fullfile(loretaPathCond, sprintf("S_%.2d", dataIdx));
-                        if ~isfolder(loretaPathSub), mkdir(loretaPathSub); end
-
-                        nEpochs = size(ALLEEGDATA.(groupField).(conditionField)(dataIdx).data, 3);
-
-                        % Loop through data and save matrices
-                        for epIdx = 1:nEpochs
-
-                            writematrix(ALLEEGDATA.(groupField).(conditionField)(dataIdx).data(:, exportStartTimeWin:exportEndTimeWin, epIdx)', sprintf("%s\\S_%.2d_%.2d.asc", loretaPathSub, dataIdx, epIdx), "FileType", "text", "Delimiter", "\t"); % loreta needs text tab delimited
-
-                        end
+                        % Export sub
+                        writematrix(ALLEEGDATA.(groupField).(conditionField)(dataIdx).meanData(:, exportStartTimeWin:exportEndTimeWin)', sprintf("%s\\S_%.2d.asc", loretaPathCond, dataIdx), "FileType", "text", "Delimiter", "\t"); % loreta needs text tab delimited
 
                     end
 
