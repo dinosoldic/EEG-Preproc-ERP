@@ -37,7 +37,6 @@
 clear; clc;
 
 %% Ask user for parameters
-
 cleanoptions = {'Resample', 'Single EEG filter', 'Multi EEG filter', 'ERP epoch data', 'RS epoch data', 'Correct baseline', 'Reject with ICA', ...
                     'Interpolate', 'Reject voltage outliers', 'Reject abnormal spectra', 'Re-reference', 'Plot ERPs', 'Transform to Fieldtrip', ...
                 'Transform to LORETA (RS)'};

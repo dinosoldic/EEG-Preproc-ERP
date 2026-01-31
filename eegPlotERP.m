@@ -57,7 +57,7 @@
 % Email: dino.soldic@urjc.es
 %   Date: 2025-10-06
 %
-% See also: eegPreproc, exportSPSS, EEGLAB
+% See also: eegPreproc, exportERPData, EEGLAB
 
 %% Clean and Prep data
 clear; clc;
@@ -800,12 +800,12 @@ end
 %% Export to SPSS
 
 % Ask to export
-exportPrompt = questdlg('Do you wish to export data to SPSS/Excel?', 'Data Export', 'Yes', 'No', 'Yes');
+exportPrompt = questdlg('Do you wish to export data for further analyses?', 'Data Export', 'Yes', 'No', 'Yes');
 
 if strcmp(exportPrompt, 'Yes')
     % Determine feature to export from data
     while true
-        featureOptions = {'Average Amplitude', 'Latency', 'Peak Amplitude', 'Timepoints'};
+        featureOptions = {'Average Amplitude', 'Latency', 'Peak Amplitude', 'Timepoints', 'LORETA'};
         [featureSelection, ~] = listdlg('ListString', featureOptions, 'PromptString', 'Select feature extraction:', 'SelectionMode', 'multiple');
 
         if ~isempty(featureSelection), break, end
@@ -826,7 +826,7 @@ if strcmp(exportPrompt, 'Yes')
     fprintf('Exported data will be saved to:\n %s\n', saveTableSPSSPath);
 
     % Call export func and pass params
-    exportSPSS(ALLEEGDATA, exportTimeWin, axisTime, chanLabels, feature, saveTableSPSSPath);
+    exportERPData(ALLEEGDATA, exportTimeWin, axisTime, chanLabels, feature, saveTableSPSSPath);
 
 else
     % Display completion
