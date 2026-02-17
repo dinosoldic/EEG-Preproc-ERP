@@ -233,8 +233,8 @@ function exportERPData(ALLEEGDATA, exportTimeWin, timeVector, chanLabels, featur
                     if isLORETAExp
 
                         % Export sub
-                        writematrix(ALLEEGDATA.(groupField).(conditionField)(dataIdx).meanData(:, exportStartTimeWin:exportEndTimeWin)', sprintf("%s\\S_%.2d.asc", loretaPathCond, dataIdx), "FileType", "text", "Delimiter", "\t"); % loreta needs text tab delimited
-
+                        fileName = sprintf('%s\\S_%.2d.asc', loretaPathCond, dataIdx);
+                        writematrix(ALLEEGDATA.(groupField).(conditionField)(dataIdx).meanData(:, exportStartTimeWin:exportEndTimeWin)', fileName, 'FileType', 'text', 'Delimiter', '\t');
                     end
 
                 end
