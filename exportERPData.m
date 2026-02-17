@@ -147,7 +147,7 @@ function exportERPData(ALLEEGDATA, exportTimeWin, timeVector, chanLabels, featur
                 for dataIdx = 1:numel(ALLEEGDATA.(groupField).(conditionField))
 
                     % Get data from struct
-                    if isLORETAExp, dataToTable = ALLEEGDATA.(groupField).(conditionField)(dataIdx).meanData; end
+                    if ~isLORETAExp, dataToTable = ALLEEGDATA.(groupField).(conditionField)(dataIdx).meanData; end
 
                     % Extract time win
                     [~, exportStartTimeWin] = min(abs(timeVector - exportTimeWin(1))); % closest to 0 is the desired idx. Accounts for time(ms) not being in timeVector.
