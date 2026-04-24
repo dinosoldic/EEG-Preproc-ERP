@@ -29,7 +29,7 @@
 %
 % Author: Dino Soldic
 % Email: dino.soldic@urjc.es
-% Date: 2025-07-11
+% Date: 2026-04-24
 %
 % See also: eegPlotERP
 
@@ -519,6 +519,82 @@ while true
                     EEG = pop_rmbase(EEG, baselineThreshold');
                 end
 
+                % step 7(8) Remove bad channel
+                if any(cleanselection == 8)
+
+                    chansToInterpolate = [];
+
+                    while true
+
+                        if ~exist('doRemoveBadChans', 'var')
+                            doRemoveBadChans = questdlg('Do you wish to interpolate any channels?', 'Interpolate Channels', 'Yes', 'No', 'Yes');
+                            if strcmpi(doRemoveBadChans, 'yes'), doRemoveBadChans = true; else, doRemoveBadChans = false; end
+                        end
+
+                        if ~doRemoveBadChans
+                            fprintf('No channels to interpolate.\n');
+                            break;
+                        end
+
+                        [selectBadChansToRemove, ~] = listdlg('ListString', {EEG.chanlocs.labels}, 'PromptString', 'Select channels to remove:', 'SelectionMode', 'multiple');
+
+                        % update chanm to interpo idx on each iteration
+                        chansToInterpolate = [chansToInterpolate, selectBadChansToRemove]; %#ok<AGROW>
+
+                        % Find chanlabels from indices
+                        chansToRemoveLabel = {EEG.chanlocs(selectBadChansToRemove).labels};
+
+                        % Update EEG
+                        EEG = eeg_checkset(EEG);
+
+                        % Completion msg
+                        fprintf('Channel(s) {%s} will be interpolated.\n', strjoin(chansToRemoveLabel, ', '));
+
+                        pop_eegplot(EEG, 1, 1, 1); % [1 channel data or 0 independent components], [1 for channel interpolation, 0 to skip interpolation], [1 to allow manual rejection]
+                        uiwait(gcf);
+                        close all
+
+                        % Ask to interpolate again
+                        interpochan = questdlg('Do you wish to interpolate more channels?', 'Interpolation', 'Yes', 'No', 'No');
+                        if strcmpi(interpochan, 'No'), break, end
+                    end
+
+                end
+
+                % Step 7(11) Re-reference before ICA following eeglab suggestion
+                if any(cleanselection == 11)
+
+                    if ~exist('trialRef', 'var')
+
+                        while true
+                            trialRef = questdlg('How do you wish to re-reference the data?', 'Re-reference', 'Average', 'Channel', 'Average');
+
+                            if strcmpi(trialRef, 'channel')
+                                % Select channel for ref
+                                chanlabels = {EEG.chanlocs.labels};
+                                [rerefChan, ~] = listdlg('ListString', chanlabels, 'PromptString', 'Select channel for Re-reference:', 'SelectionMode', 'single');
+
+                                % Check input
+                                if isempty(rerefChan), fprintf('Select a valid channel.\n'), else, break, end
+                            end
+
+                            % Check input
+                            if isempty(trialRef), fprintf('Select an option.\n'), else, break, end
+                        end
+
+                    end
+
+                    % Re-ref func
+                    if strcmpi(trialRef, 'average')
+                        EEG = pop_reref(EEG, [], 'exclude', chansToInterpolate);
+                        fprintf('Computing average reference of the data.\n');
+                    elseif strcmpi(trialRef, 'channel')
+                        EEG = pop_reref(EEG, rerefChan, 'exclude', chansToInterpolate);
+                        fprintf('Referencing data to channel "%s".\n', EEG.chanlocs(rerefChan).labels);
+                    end
+
+                end
+
                 % Step 7 run ICA
                 if any(cleanselection == 7)
 
@@ -528,9 +604,9 @@ while true
 
                             switch icaType
                                 case 1
-                                    EEG = pop_runica(EEG, 'icatype', 'runica', 'extended', 1, 'interrupt', 'off');
+                                    EEG = pop_runica(EEG, 'icatype', 'runica', 'extended', 1, 'interrupt', 'off', 'chanind', setdiff(1:EEG.nbchan, chansToInterpolate));
                                 case 2
-                                    EEG = pop_runica(EEG, 'icatype', 'sobi');
+                                    EEG = pop_runica(EEG, 'icatype', 'sobi', 'chanind', setdiff(1:EEG.nbchan, chansToInterpolate));
                             end
 
                             break
@@ -590,17 +666,7 @@ while true
                 % Step 8 Interpolate bad channels if necessary
                 if any(cleanselection == 8)
 
-                    while true
-                        EEG = pop_interp(EEG);
-
-                        pop_eegplot(EEG, 1, 1, 1); % [1 channel data or 0 independent components], [1 for channel interpolation, 0 to skip interpolation], [1 to allow manual rejection]
-                        uiwait(gcf);
-                        close all
-
-                        % Ask to interpolate again
-                        interpochan = questdlg('Do you wish to interpolate again?', 'Interpolation', 'Yes', 'No', 'No');
-                        if strcmpi(interpochan, 'No'), break, end
-                    end
+                    EEG = pop_interp(EEG, chansToInterpolate);
 
                 end
 
@@ -682,28 +748,8 @@ while true
 
                 end
 
-                % Step 11 Re-reference
+                % Step 11 Re-reference again after ICA
                 if any(cleanselection == 11)
-
-                    if ~exist('trialRef', 'var')
-
-                        while true
-                            trialRef = questdlg('How do you wish to re-reference the data?', 'Re-reference', 'Average', 'Channel', 'Average');
-
-                            if strcmpi(trialRef, 'channel')
-                                % Select channel for ref
-                                chanlabels = {EEG.chanlocs.labels};
-                                [rerefChan, ~] = listdlg('ListString', chanlabels, 'PromptString', 'Select channel for Re-reference:', 'SelectionMode', 'single');
-
-                                % Check input
-                                if isempty(rerefChan), fprintf('Select a valid channel.\n'), else, break, end
-                            end
-
-                            % Check input
-                            if isempty(trialRef), fprintf('Select an option.\n'), else, break, end
-                        end
-
-                    end
 
                     % Re-ref func
                     if strcmpi(trialRef, 'average')
@@ -714,10 +760,6 @@ while true
                         fprintf('Referencing data to channel "%s".\n', EEG.chanlocs(rerefChan).labels);
                     end
 
-                    % Plot
-                    pop_eegplot(EEG, 1, 1, 1); % [1 channel data or 0 independent components], [1 for channel interpolation, 0 to skip interpolation], [1 to allow manual rejection]
-                    uiwait(gcf);
-                    close all
                 end
 
                 % Step 12 final data inspection
@@ -811,6 +853,8 @@ while true
 
             % Display completion
             fprintf('\n-----Subject %s finished-----\n\n', fileNameSave);
+
+            clear doRemoveBadChans
 
         catch subject_loop_error
             % Display error message
