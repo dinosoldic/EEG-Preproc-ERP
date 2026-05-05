@@ -39,7 +39,7 @@ clear; clc;
 %% Ask user for parameters
 cleanoptions = {'Resample', 'Single EEG filter', 'Multi EEG filter', 'ERP epoch data', 'RS epoch data', 'Correct baseline', 'Reject with ICA', ...
                     'Interpolate', 'Reject voltage outliers', 'Reject abnormal spectra', 'Re-reference', 'Plot ERPs', 'Transform to Fieldtrip', ...
-                'Transform to LORETA (RS)'};
+                'Transform to LORETA (RS)', 'Transform to BV'};
 [cleanselection, ~] = listdlg('ListString', cleanoptions, 'PromptString', 'Select cleaning steps:', 'SelectionMode', 'multiple');
 
 if isempty(cleanselection), fprintf('Operation canceled. Shutting down\n'); return, end
@@ -848,6 +848,16 @@ while true
                     writematrix(EEG.data(:, :, epIdx)', sprintf("%s\\%s_%d.asc", loretaDir, fileNameSave, epIdx), "FileType", "text", "Delimiter", "\t"); % loreta needs text tab delimited
 
                 end
+
+            end
+
+            if any(cleanselection == 15)
+
+                fprintf('Exporting to BrainVision...\n');
+                bvDir = fullfile(rawSavepath, 'BrainVision');
+                if ~isfolder(bvDir), mkdir(bvDir); end
+
+                EEG = pop_writebva(EEG, fullfile(bvDir, fileNameSave), 'DataOrientation', 'MULTIPLEXED');
 
             end
 
