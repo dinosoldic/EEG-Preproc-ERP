@@ -147,7 +147,7 @@ function exportERPData(ALLEEGDATA, exportTimeWin, timeVector, chanLabels, featur
                 for dataIdx = 1:numel(ALLEEGDATA.(groupField).(conditionField))
 
                     % Get data from struct
-                    if ~isLORETAExp, dataToTable = ALLEEGDATA.(groupField).(conditionField)(dataIdx).meanData; end
+                    dataToTable = ALLEEGDATA.(groupField).(conditionField)(dataIdx).meanData;
 
                     % Extract time win
                     [~, exportStartTimeWin] = min(abs(timeVector - exportTimeWin(1))); % closest to 0 is the desired idx. Accounts for time(ms) not being in timeVector.
@@ -270,7 +270,7 @@ function exportERPData(ALLEEGDATA, exportTimeWin, timeVector, chanLabels, featur
         end
 
         % Refresh displacement for groups
-        groupDisplacement = size(tableDataAmp, 1);
+        groupDisplacement = groupDisplacement + numel(ALLEEGDATA.(groupField).(conditionFields{1}));
         groupDisplacementTmpts = size(tableDataTmpts, 2);
     end
 
